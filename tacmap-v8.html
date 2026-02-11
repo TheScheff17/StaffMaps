@@ -1,0 +1,2563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TacMap">
+<meta name="theme-color" content="#0a0e14">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>ScheffMap v2.1 — Tactical Map Engine</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --bg: #0a0e14; --panel-bg: rgba(12,18,25,0.95); --panel-border: #1a2535; --text: #c8d0d8; --text-dim: #8a94a0; --text-bright: #e0e8f0;
+    --input-bg: #111820; --input-border: #2a3545; --btn-bg: #111820; --btn-border: #333; --btn-text: #8a94a0;
+    --active-border: #4a9eff; --active-bg: #0d1f3c; --active-text: #7cc4ff; --label: #4a9eff;
+    --preview-bg: #111820; --ui-scale: 1; --panel-w: 260px;
+  }
+  [data-theme="light"] {
+    --bg: #e8e5de; --panel-bg: rgba(240,237,230,0.95); --panel-border: #c0b8a8; --text: #3a3530; --text-dim: #7a7060; --text-bright: #1a1815;
+    --input-bg: #f5f2eb; --input-border: #c8c0b0; --btn-bg: #ece8e0; --btn-border: #b0a898; --btn-text: #5a5248;
+    --active-border: #3070b0; --active-bg: #dde8f2; --active-text: #1a4580; --label: #3070b0;
+    --preview-bg: #f5f2eb;
+  }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; color: var(--text); touch-action: none; }
+  #app { width: 100%; height: 100%; display: flex; flex-direction: column; }
+  .topbar { height: calc(36px * var(--ui-scale)); min-height: calc(36px * var(--ui-scale)); background: var(--panel-bg); border-bottom: 1px solid var(--panel-border); display: flex; align-items: center; justify-content: space-between; padding: 0 10px; z-index: 100; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  .topbar-left { display: flex; align-items: center; gap: 8px; }
+  .topbar-dot { width: 7px; height: 7px; border-radius: 50%; background: #40e060; }
+  .topbar-title { font-size: calc(11px * var(--ui-scale)); font-weight: 700; letter-spacing: 1.5px; color: #7cc4ff; }
+  .topbar-ver { font-size: calc(9px * var(--ui-scale)); color: #4a5568; }
+  .topbar-coords { font-size: calc(10px * var(--ui-scale)); color: var(--text-dim); letter-spacing: 0.5px; }
+  .main { flex: 1; display: flex; position: relative; overflow: hidden; }
+  #mapCanvas { flex: 1; cursor: crosshair; }
+  .sidepanel { width: var(--panel-w); min-width: 180px; max-width: 50vw; background: var(--panel-bg); border-left: 1px solid var(--panel-border); display: flex; flex-direction: column; z-index: 50; backdrop-filter: blur(8px); position: relative; overflow: visible; }
+  .sidepanel.collapsed { width: 0; min-width: 0; overflow: hidden; border: none; }
+  .panel-resize { position: absolute; left: -4px; top: 0; bottom: 0; width: 8px; cursor: ew-resize; z-index: 51; }
+  .panel-resize:hover, .panel-resize.active { background: var(--active-border); opacity: 0.3; }
+  .panel-header { padding: 8px 10px; border-bottom: 1px solid var(--panel-border); display: flex; justify-content: space-between; align-items: center; }
+  .panel-title { font-size: calc(9px * var(--ui-scale)); font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--label); }
+  .unit-list { flex: 1; overflow-y: auto; min-height: 0; }
+  .unit-item { padding: 6px 10px; cursor: pointer; font-size: calc(10px * var(--ui-scale)); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--input-bg); }
+  .unit-item.selected { background: var(--active-bg); border-left: 2px solid var(--active-border); }
+  .unit-item.placed { color: var(--text); } .unit-item.unplaced { color: #FFD700; }
+  .unit-item .aff { font-size: calc(8px * var(--ui-scale)); color: var(--text-dim); }
+  .btn { padding: 4px 8px; border: 1px solid var(--btn-border); border-radius: 3px; background: var(--btn-bg); color: var(--btn-text); cursor: pointer; font-size: calc(10px * var(--ui-scale)); font-family: 'SF Mono', monospace; white-space: nowrap; }
+  .btn:hover { opacity: 0.85; } .btn.active { border: 2px solid var(--active-border); background: var(--active-bg); color: var(--active-text); }
+  .btn.gold { border: 2px solid #FFD700; background: #1a1800; color: #FFD700; font-weight: 700; }
+  .btn.danger { color: #ff6060; border-color: #5a2020; }
+  .editor-overlay { position: absolute; bottom: 0; left: 0; right: var(--panel-w); background: var(--panel-bg); border-top: 2px solid var(--panel-border); z-index: 80; backdrop-filter: blur(8px); overflow-y: auto; }
+  .editor-overlay.full { right: 0; }
+  .editor-drag-handle { height: 28px; display: flex; align-items: center; justify-content: center; cursor: ns-resize; background: var(--panel-bg); border-bottom: 1px solid var(--panel-border); user-select: none; -webkit-user-select: none; position: sticky; top: 0; z-index: 2; }
+  .editor-drag-handle .grip { width: 32px; height: 4px; border-radius: 2px; background: var(--btn-border); }
+  .editor-grid { padding: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .editor-full { grid-column: 1 / -1; }
+  .field-label { font-size: calc(9px * var(--ui-scale)); font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--label); margin-bottom: 3px; display: block; }
+  .field-input { width: 100%; max-width: 240px; padding: 4px 6px; background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 3px; color: var(--text-bright); font-size: calc(11px * var(--ui-scale)); font-family: 'SF Mono', monospace; box-sizing: border-box; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 2px; }
+  .mode-bar { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; z-index: 90; background: var(--panel-bg); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--panel-border); }
+  .ed-tabs { display: flex; border-bottom: 1px solid var(--panel-border); }
+  .ed-tab { flex: 1; padding: 6px 4px; text-align: center; font-size: calc(9px * var(--ui-scale)); font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; cursor: pointer; color: var(--text-dim); background: none; border: none; border-bottom: 2px solid transparent; font-family: inherit; }
+  .ed-tab.active { color: var(--active-text); border-bottom-color: var(--active-border); }
+  .ed-tab-content { display: none; } .ed-tab-content.active { display: block; }
+  .icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(64px * var(--ui-scale)), 1fr)); gap: 4px; padding: 4px 0; }
+  .icon-cell { width: calc(64px * var(--ui-scale)); height: calc(52px * var(--ui-scale)); display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid var(--input-border); border-radius: 4px; background: #c8dce8; position: relative; transition: background 0.1s; }
+  [data-theme="light"] .icon-cell { background: #dde8f0; }
+  .icon-cell:hover { background: #d8eaf4; border-color: var(--active-border); }
+  .icon-cell.active { border: 2px solid var(--active-border); background: #b0d0e8; }
+  [data-theme="light"] .icon-cell:hover { background: #cde0f0; }
+  [data-theme="light"] .icon-cell.active { background: #b8d4ec; }
+  .icon-cell canvas { width: 100%; height: 100%; pointer-events: none; }
+  .icon-tooltip { display: none; position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: #0a0e14; border: 1px solid var(--active-border); border-radius: 4px; padding: 4px 10px; font-size: calc(11px * var(--ui-scale)); font-weight: 700; color: #e0e8f0; white-space: nowrap; z-index: 200; pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+  [data-theme="light"] .icon-tooltip { background: #1a2535; color: #e0e8f0; }
+  .icon-cell:hover .icon-tooltip { display: block; }
+  .icon-cat { font-size: calc(8px * var(--ui-scale)); font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-dim); padding: 6px 0 2px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+  .icon-cat::before { content: "▸"; font-size: 7px; transition: transform 0.15s; }
+  .icon-cat.open::before { transform: rotate(90deg); }
+  .ring-row { display: flex; align-items: center; gap: 4px; padding: 4px 0; border-bottom: 1px solid var(--input-bg); font-size: calc(10px * var(--ui-scale)); }
+  .ring-row input { font-family: inherit; }
+  .eq-row { display: flex; align-items: center; gap: 6px; padding: 3px 0; font-size: calc(10px * var(--ui-scale)); }
+  .eq-label { color: var(--text-dim); font-size: calc(8px * var(--ui-scale)); font-weight: 700; text-transform: uppercase; min-width: 55px; }
+  .zoom-ctrl { position: absolute; bottom: 10px; right: calc(var(--panel-w) + 10px); display: flex; flex-direction: column; gap: 2px; z-index: 90; transition: right 0.15s; }
+  .zoom-ctrl.panel-closed { right: 10px; }
+  .toggle-panel { position: absolute; top: calc(36px * var(--ui-scale) + 8px); right: var(--panel-w); z-index: 60; background: var(--panel-bg); border: 1px solid var(--panel-border); border-right: none; border-radius: 4px 0 0 4px; padding: 6px 4px; cursor: pointer; color: var(--text-dim); font-size: 12px; }
+  .toggle-panel.shifted { right: 0; }
+  /* Map settings dropdown */
+  .settings-dropdown { position: absolute; top: calc(36px * var(--ui-scale)); right: 0; background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 0 0 4px 4px; padding: 8px; z-index: 110; min-width: 220px; backdrop-filter: blur(8px); display: none; }
+  .settings-dropdown.open { display: block; }
+  .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: calc(10px * var(--ui-scale)); }
+  .settings-row label { color: var(--text-dim); }
+  select.field-input { padding: 2px 4px; font-size: calc(10px * var(--ui-scale)); }
+  ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #0a0e14; } ::-webkit-scrollbar-thumb { background: #2a3545; border-radius: 2px; }
+  @media (max-width: 768px) { .sidepanel { position: absolute; top: calc(36px * var(--ui-scale)); right: 0; bottom: 0; width: var(--panel-w); } .editor-overlay { right: 0; } .zoom-ctrl { right: 10px; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ============================================
+// MIL-STD-2525C CONSTANTS (for preview SVG)
+// ============================================
+const U = 16, FRAME_W = 7*U, FRAME_H = 5*U, SVG_W = 14*U, SVG_H = 14*U, CX = SVG_W/2, CY = SVG_H/2 + U;
+const AFFILIATIONS = {
+  friendly: { label: "Friendly", color: "#000", fill: "#A0DCF0", frame: "rect" },
+  hostile: { label: "Hostile", color: "#000", fill: "#F88080", frame: "diamond" },
+  neutral: { label: "Neutral", color: "#000", fill: "#AAFFAA", frame: "square" },
+  unknown: { label: "Unknown", color: "#000", fill: "#FFDF00", frame: "quatrefoil" },
+};
+const ECHELONS = {
+  fireteam:{label:"Fireteam",type:"dot",count:0,order:0}, squad:{label:"Squad",type:"dot",count:1,order:1},
+  section:{label:"Section",type:"dot",count:2,order:2}, platoon:{label:"Platoon",type:"dot",count:3,order:3},
+  company:{label:"Company",type:"bar",count:1,order:4}, battalion:{label:"Battalion",type:"bar",count:2,order:5},
+  regiment:{label:"Regiment",type:"bar",count:3,order:6}, brigade:{label:"Brigade",type:"x",count:1,order:7},
+  division:{label:"Division",type:"x",count:2,order:8}, corps:{label:"Corps",type:"x",count:3,order:9},
+  army:{label:"Army",type:"x",count:4,order:10}, armygroup:{label:"Army Group",type:"x",count:5,order:11},
+  theater:{label:"Theater",type:"x",count:6,order:12},
+};
+const UNIT_TYPES = {
+  infantry:"Infantry", light_infantry:"Light Infantry", motorized_infantry:"Motorized Inf",
+  mechanized_infantry:"Mech Infantry", armored_infantry:"Armored Inf", armor:"Armor",
+  light_armor:"Light Armor", heavy_armor:"Heavy Armor", armor_wheeled:"Armor (Wheeled)",
+  armored_recon:"Armored Recon", cavalry:"Cavalry/Recon", artillery:"Artillery",
+  mechanized_artillery:"Mech Artillery", rocket_artillery:"Rocket Arty", mortar:"Mortars",
+  air_defense:"Air Defense", engineer:"Engineers", combat_engineer:"Combat Engr",
+  signal:"Signal", military_intel:"MI", electronic_warfare:"EW", cyber:"Cyber",
+  military_police:"MP", special_operations:"SOF", aviation:"Aviation",
+  attack_aviation:"Attack Aviation", sustainment:"Sustainment", supply:"Supply",
+  transportation:"Transport", maintenance:"Maintenance", medical:"Medical",
+  headquarters:"HQ", combined_arms:"Combined Arms", cbrn:"CBRN",
+  forward_observer:"FO/TA", anti_tank:"Anti-Tank", anti_armor:"Anti-Armor",
+};
+const UNIT_CATEGORIES = [
+  { name: "Infantry, Tanks & Artillery", types: ["infantry","light_infantry","motorized_infantry","mechanized_infantry","armored_infantry","armor","light_armor","heavy_armor","armor_wheeled","armored_recon","cavalry","combined_arms","artillery","mechanized_artillery","rocket_artillery","mortar","anti_tank","anti_armor"] },
+  { name: "Aviation & Air Defense", types: ["aviation","attack_aviation","air_defense"] },
+  { name: "Engineer", types: ["engineer","combat_engineer","cbrn"] },
+  { name: "Command, Signal & EW", types: ["headquarters","forward_observer","signal","military_intel","electronic_warfare","cyber"] },
+  { name: "Logistics & Medical", types: ["sustainment","supply","transportation","maintenance","medical"] },
+  { name: "Special Forces", types: ["special_operations","military_police"] },
+];
+// Default equipment data by unit type
+const EQUIPMENT_DEFAULTS = {
+  armor: { vehicle:"M1A2 SEPv3 Abrams", crew:4, weapon:"M256 120mm Smoothbore", maxRange_m:4000, sensorRange_m:3500, speed_kph:67 },
+  light_armor: { vehicle:"M1128 Stryker MGS", crew:3, weapon:"M68A2 105mm", maxRange_m:3000, sensorRange_m:3000, speed_kph:97 },
+  heavy_armor: { vehicle:"M1A2 SEPv3 Abrams", crew:4, weapon:"M256 120mm Smoothbore", maxRange_m:4000, sensorRange_m:3500, speed_kph:67 },
+  armor_wheeled: { vehicle:"Stryker ICV", crew:2, weapon:"M2 .50 Cal HMG", maxRange_m:1800, sensorRange_m:3000, speed_kph:97 },
+  mechanized_infantry: { vehicle:"M2A3 Bradley IFV", crew:3, weapon:"M242 25mm Bushmaster", maxRange_m:2500, sensorRange_m:3500, speed_kph:61 },
+  armored_infantry: { vehicle:"M2A3 Bradley IFV", crew:3, weapon:"M242 25mm Bushmaster / TOW", maxRange_m:3750, sensorRange_m:3500, speed_kph:61 },
+  armored_recon: { vehicle:"M3A3 Bradley CFV", crew:3, weapon:"M242 25mm / TOW", maxRange_m:3750, sensorRange_m:4000, speed_kph:61 },
+  cavalry: { vehicle:"HMMWV / JLTV", crew:4, weapon:"M2 .50 Cal / Mk 19", maxRange_m:1800, sensorRange_m:2000, speed_kph:105 },
+  artillery: { vehicle:"M109A7 Paladin", crew:4, weapon:"M284 155mm L/39", maxRange_m:30000, sensorRange_m:0, speed_kph:61 },
+  mechanized_artillery: { vehicle:"M109A7 Paladin", crew:4, weapon:"M284 155mm L/39", maxRange_m:30000, sensorRange_m:0, speed_kph:61 },
+  rocket_artillery: { vehicle:"M270A2 MLRS", crew:3, weapon:"GMLRS / ATACMS", maxRange_m:84000, sensorRange_m:0, speed_kph:64 },
+  mortar: { vehicle:"M1064 / M1129 Stryker MC", crew:5, weapon:"M120 120mm Mortar", maxRange_m:7200, sensorRange_m:0, speed_kph:61 },
+  air_defense: { vehicle:"M-SHORAD / Avenger", crew:2, weapon:"Stinger / 30mm", maxRange_m:8000, sensorRange_m:12000, speed_kph:97 },
+  aviation: { vehicle:"UH-60M Black Hawk", crew:4, weapon:"M240H 7.62mm", maxRange_m:600, sensorRange_m:5000, speed_kph:296 },
+  attack_aviation: { vehicle:"AH-64E Apache Guardian", crew:2, weapon:"AGM-114 Hellfire / M230 30mm", maxRange_m:8000, sensorRange_m:8000, speed_kph:293 },
+  anti_tank: { vehicle:"ITAS / Javelin", crew:3, weapon:"FGM-148 Javelin", maxRange_m:4000, sensorRange_m:4000, speed_kph:0 },
+  anti_armor: { vehicle:"ITAS / TOW", crew:4, weapon:"BGM-71 TOW", maxRange_m:3750, sensorRange_m:3750, speed_kph:0 },
+};
+const MODIFIER_OPTIONS = { reinforced:"(+)", reduced:"(-)", airborne:"ABN", airmobile:"AASLT", amphibious:"AMPH" };
+
+// ============================================
+// SVG BUILDER (for editor preview only)
+// ============================================
+function buildSymbolSVG(unit) {
+  const a = AFFILIATIONS[unit.affiliation], c = a.color, sw = 3;
+  const hw = FRAME_W/2, hh = FRAME_H/2;
+  const isDiamond = a.frame === "diamond";
+  // Inscribed rectangle bounds for diamond icons
+  let iL, iR, iT, iB, iOvalRx, iOvalRy;
+  if (isDiamond) {
+    const dx = hw + U*0.8, dy = hh + U*1.2;
+    iL = CX - dx/2; iR = CX + dx/2;
+    iT = CY - dy/2; iB = CY + dy/2;
+    // Oval stays at friendly size for consistent racetrack
+    iOvalRx = FRAME_W*0.30; iOvalRy = FRAME_H*0.22;
+  } else {
+    iL = CX-hw; iR = CX+hw; iT = CY-hh; iB = CY+hh;
+    iOvalRx = FRAME_W*0.30; iOvalRy = FRAME_H*0.22;
+  }
+  const dSc = isDiamond ? (iR-iL)/FRAME_W : 1;
+  const ovalRx = FRAME_W*0.30, ovalRy = FRAME_H*0.22;
+  let p = [];
+  if (unit.isHQ) p.push(`<line x1="${CX}" y1="${CY+hh}" x2="${CX}" y2="${SVG_H-U*0.5}" stroke="#000" stroke-width="${sw}"/>`);
+  // Frame
+  const L=CX-hw, R=CX+hw, T=CY-hh, B=CY+hh;
+  switch(a.frame) {
+    case "rect": case "square": p.push(`<rect x="${L}" y="${T}" width="${FRAME_W}" height="${FRAME_H}" fill="${a.fill}" stroke="${c}" stroke-width="${sw}"/>`); break;
+    case "diamond": { const dx=hw+U*0.8, dy=hh+U*1.2; p.push(`<polygon points="${CX},${CY-dy} ${CX+dx},${CY} ${CX},${CY+dy} ${CX-dx},${CY}" fill="${a.fill}" stroke="${c}" stroke-width="${sw}"/>`); break; }
+    case "quatrefoil": { const qw=hw+U*0.3,qh=hh+U*0.3,cr=U*2; p.push(`<path d="M ${CX},${CY-qh} C ${CX+cr},${CY-qh} ${CX+qw},${CY-cr} ${CX+qw},${CY} C ${CX+qw},${CY+cr} ${CX+cr},${CY+qh} ${CX},${CY+qh} C ${CX-cr},${CY+qh} ${CX-qw},${CY+cr} ${CX-qw},${CY} C ${CX-qw},${CY-cr} ${CX-cr},${CY-qh} ${CX},${CY-qh} Z" fill="${a.fill}" stroke="${c}" stroke-width="${sw}"/>`); break; }
+  }
+  // Icon — use inset bounds for diamond
+  const rt = `<path d="M ${CX-iOvalRx+iOvalRy},${CY-iOvalRy} L ${CX+iOvalRx-iOvalRy},${CY-iOvalRy} A ${iOvalRy},${iOvalRy} 0 0 1 ${CX+iOvalRx-iOvalRy},${CY+iOvalRy} L ${CX-iOvalRx+iOvalRy},${CY+iOvalRy} A ${iOvalRy},${iOvalRy} 0 0 1 ${CX-iOvalRx+iOvalRy},${CY-iOvalRy} Z" fill="none" stroke="${c}" stroke-width="${sw}"/>`;
+  const icons = {
+    infantry: `<line x1="${iL}" y1="${iB}" x2="${iR}" y2="${iT}" stroke="${c}" stroke-width="${sw}"/><line x1="${iL}" y1="${iT}" x2="${iR}" y2="${iB}" stroke="${c}" stroke-width="${sw}"/>`,
+    armor: rt,
+    mechanized_infantry: `<line x1="${iL}" y1="${iB}" x2="${iR}" y2="${iT}" stroke="${c}" stroke-width="${sw}"/><line x1="${iL}" y1="${iT}" x2="${iR}" y2="${iB}" stroke="${c}" stroke-width="${sw}"/>${rt}`,
+    cavalry: `<line x1="${iL}" y1="${iB}" x2="${iR}" y2="${iT}" stroke="${c}" stroke-width="${sw}"/>`,
+    armored_recon: `${rt}<line x1="${iL}" y1="${iB}" x2="${iR}" y2="${iT}" stroke="${c}" stroke-width="${sw}"/>`,
+    artillery: `<circle cx="${CX}" cy="${CY}" r="${(iB-iT)*0.13}" fill="${c}"/>`,
+    mechanized_artillery: `${rt}<circle cx="${CX}" cy="${CY}" r="${(iB-iT)*0.13}" fill="${c}"/>`,
+    rocket_artillery: `<circle cx="${CX}" cy="${CY}" r="${FRAME_H*0.13}" fill="${c}"/>${[0,1].map(i=>{const chW=FRAME_H*0.18,chH=FRAME_H*0.09,gap=FRAME_H*0.04,yy=CY-FRAME_H*0.13-FRAME_H*0.05-i*(chH+gap);return`<path d="M${CX-chW},${yy} L${CX},${yy-chH} L${CX+chW},${yy}" fill="none" stroke="${c}" stroke-width="${sw}"/>`}).join("")}`,
+    air_defense: `<line x1="${CX-U*1.2*(isDiamond?dSc:1)}" y1="${CY+U*0.4}" x2="${CX}" y2="${CY-U*0.8*(isDiamond?dSc:1)}" stroke="${c}" stroke-width="${sw}"/><line x1="${CX}" y1="${CY-U*0.8*(isDiamond?dSc:1)}" x2="${CX+U*1.2*(isDiamond?dSc:1)}" y2="${CY+U*0.4}" stroke="${c}" stroke-width="${sw}"/><line x1="${CX-U*1.2*(isDiamond?dSc:1)}" y1="${CY+U*(isDiamond?dSc:1)}" x2="${CX+U*1.2*(isDiamond?dSc:1)}" y2="${CY+U*(isDiamond?dSc:1)}" stroke="${c}" stroke-width="${sw}"/>`,
+    engineer: `<path d="M ${CX-U*1.5*(isDiamond?dSc:1)},${CY+U*0.5*(isDiamond?dSc:1)} L ${CX-U*1.5*(isDiamond?dSc:1)},${CY-U*0.5*(isDiamond?dSc:1)} L ${CX-U*0.9*(isDiamond?dSc:1)},${CY-U*0.5*(isDiamond?dSc:1)} L ${CX-U*0.9*(isDiamond?dSc:1)},${CY} L ${CX-U*0.3*(isDiamond?dSc:1)},${CY} L ${CX-U*0.3*(isDiamond?dSc:1)},${CY-U*0.5*(isDiamond?dSc:1)} L ${CX+U*0.3*(isDiamond?dSc:1)},${CY-U*0.5*(isDiamond?dSc:1)} L ${CX+U*0.3*(isDiamond?dSc:1)},${CY} L ${CX+U*0.9*(isDiamond?dSc:1)},${CY} L ${CX+U*0.9*(isDiamond?dSc:1)},${CY-U*0.5*(isDiamond?dSc:1)} L ${CX+U*1.5*(isDiamond?dSc:1)},${CY-U*0.5*(isDiamond?dSc:1)} L ${CX+U*1.5*(isDiamond?dSc:1)},${CY+U*0.5*(isDiamond?dSc:1)} Z" fill="none" stroke="${c}" stroke-width="${sw}"/>`,
+    signal: `<path d="M ${CX-U*(isDiamond?dSc:1)},${CY+U*0.6*(isDiamond?dSc:1)} L ${CX-U*0.3*(isDiamond?dSc:1)},${CY-U*0.6*(isDiamond?dSc:1)} L ${CX+U*0.3*(isDiamond?dSc:1)},${CY+U*0.6*(isDiamond?dSc:1)} L ${CX+U*(isDiamond?dSc:1)},${CY-U*0.6*(isDiamond?dSc:1)}" fill="none" stroke="${c}" stroke-width="${sw}"/>`,
+    aviation: `<path d="M ${CX-U*1.5*(isDiamond?dSc:1)},${CY+U*0.3} Q ${CX},${CY-U*1.5*(isDiamond?dSc:1)} ${CX+U*1.5*(isDiamond?dSc:1)},${CY+U*0.3}" fill="none" stroke="${c}" stroke-width="${sw}"/><line x1="${CX-U*1.5*(isDiamond?dSc:1)}" y1="${CY+U*0.3}" x2="${CX+U*1.5*(isDiamond?dSc:1)}" y2="${CY+U*0.3}" stroke="${c}" stroke-width="${sw}"/>`,
+    sustainment: `<line x1="${CX-U*0.8*(isDiamond?dSc:1)}" y1="${CY-U*0.8*(isDiamond?dSc:1)}" x2="${CX-U*0.8*(isDiamond?dSc:1)}" y2="${CY+U*0.8*(isDiamond?dSc:1)}" stroke="${c}" stroke-width="${sw}"/><line x1="${CX+U*0.8*(isDiamond?dSc:1)}" y1="${CY-U*0.8*(isDiamond?dSc:1)}" x2="${CX+U*0.8*(isDiamond?dSc:1)}" y2="${CY+U*0.8*(isDiamond?dSc:1)}" stroke="${c}" stroke-width="${sw}"/><line x1="${CX-U*0.8*(isDiamond?dSc:1)}" y1="${CY}" x2="${CX+U*0.8*(isDiamond?dSc:1)}" y2="${CY}" stroke="${c}" stroke-width="${sw}"/>`,
+    medical: `<line x1="${CX}" y1="${CY-U*0.8*(isDiamond?dSc:1)}" x2="${CX}" y2="${CY+U*0.8*(isDiamond?dSc:1)}" stroke="${c}" stroke-width="${sw}"/><line x1="${CX-U*0.8*(isDiamond?dSc:1)}" y1="${CY}" x2="${CX+U*0.8*(isDiamond?dSc:1)}" y2="${CY}" stroke="${c}" stroke-width="${sw}"/>`,
+  };
+  const textTypes = {military_intel:"MI",electronic_warfare:"EW",cyber:"CYBR",military_police:"MP",special_operations:"SOF",headquarters:"HQ",combined_arms:"CA",cbrn:"CBRN",forward_observer:"FO/TA",anti_tank:"AT",anti_armor:"AA",supply:"SPL",transportation:"TPT",maintenance:"MNT"};
+  const txtSize = U*0.9*dSc;
+  if (textTypes[unit.unitType]) p.push(`<text x="${CX}" y="${CY+txtSize*0.38}" text-anchor="middle" font-size="${txtSize}" font-family="Arial" font-weight="700" fill="${c}">${textTypes[unit.unitType]}</text>`);
+  else p.push(icons[unit.unitType] || `<text x="${CX}" y="${CY+U*0.3}" text-anchor="middle" font-size="${U*0.8}" fill="${c}">?</text>`);
+  // Echelon
+  const ech = ECHELONS[unit.echelon];
+  if (ech) {
+    const isH = isDiamond, baseY = CY-hh-U*0.8-(isH?U*1.2:0);
+    if (ech.type==="dot") { const tw=(Math.max(1,ech.count)-1)*U*0.7; for(let i=0;i<Math.max(1,ech.count);i++) p.push(`<circle cx="${CX-tw/2+i*U*0.7}" cy="${baseY}" r="${U*0.22}" fill="#000"/>`); }
+    else if (ech.type==="bar") { const tw=(ech.count-1)*U*0.45; for(let i=0;i<ech.count;i++) p.push(`<line x1="${CX-tw/2+i*U*0.45}" y1="${baseY-U*0.42}" x2="${CX-tw/2+i*U*0.45}" y2="${baseY+U*0.42}" stroke="#000" stroke-width="${U*0.12*0.6}"/>`); }
+    else if (ech.type==="x") { const tw=(ech.count-1)*U*0.9; for(let i=0;i<ech.count;i++) { const x=CX-tw/2+i*U*0.9; p.push(`<line x1="${x-U*0.5}" y1="${baseY-U*0.5}" x2="${x+U*0.5}" y2="${baseY+U*0.5}" stroke="#000" stroke-width="2"/><line x1="${x-U*0.5}" y1="${baseY+U*0.5}" x2="${x+U*0.5}" y2="${baseY-U*0.5}" stroke="#000" stroke-width="2"/>`); } }
+  }
+  // Text modifiers
+  const fs=U*1.3, btY=CY+hh-U*0.3;
+  if(unit.designation) p.push(`<text x="${CX-hw-U*0.5}" y="${btY}" text-anchor="end" font-size="${fs}" font-family="Arial" font-weight="700" fill="#000">${esc(unit.designation)}</text>`);
+  if(unit.parentLabel) p.push(`<text x="${CX+hw+U*0.5}" y="${btY}" text-anchor="start" font-size="${fs}" font-family="Arial" font-weight="700" fill="#000">${esc(unit.parentLabel)}</text>`);
+  const ms=(unit.modifiers||[]).map(m=>MODIFIER_OPTIONS[m]||"").filter(Boolean).join(" ");
+  if(ms) p.push(`<text x="${CX+hw+U*0.5}" y="${CY-hh+U*0.5}" text-anchor="start" font-size="${fs}" font-family="Arial" fill="#000">${ms}</text>`);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${SVG_W} ${SVG_H}" width="${SVG_W}" height="${SVG_H}">${p.join("")}</svg>`;
+}
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+// ============================================
+// TILE MAP ENGINE (Web Mercator)
+// ============================================
+const TILE_SIZE = 256;
+const TILE_SOURCES = {
+  osm: { name: "OpenStreetMap", url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png", maxZoom: 19 },
+  osm_topo: { name: "OSM Topo", url: "https://tile.opentopomap.org/{z}/{x}/{y}.png", maxZoom: 17 },
+  esri_sat: { name: "ESRI Satellite", url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", maxZoom: 19 },
+  esri_topo: { name: "ESRI Topo", url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", maxZoom: 19 },
+  carto_dark: { name: "Carto Dark", url: "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png", maxZoom: 19 },
+  none: { name: "No Map (Grid Only)", url: null, maxZoom: 20 },
+};
+
+// Mercator math
+function lonToMercX(lon) { return (lon + 180) / 360; }
+function latToMercY(lat) { const r = Math.PI/180*lat; return (1 - Math.log(Math.tan(r) + 1/Math.cos(r))/Math.PI) / 2; }
+function mercXToLon(x) { return x * 360 - 180; }
+function mercYToLat(y) { const n = Math.PI - 2*Math.PI*y; return 180/Math.PI * Math.atan(0.5*(Math.exp(n)-Math.exp(-n))); }
+
+// Convert lat/lon to pixel at given zoom
+function latlonToPixel(lat, lon, zoom) {
+  const scale = TILE_SIZE * Math.pow(2, zoom);
+  return { x: lonToMercX(lon) * scale, y: latToMercY(lat) * scale };
+}
+function pixelToLatlon(px, py, zoom) {
+  const scale = TILE_SIZE * Math.pow(2, zoom);
+  return { lat: mercYToLat(py / scale), lon: mercXToLon(px / scale) };
+}
+
+// Tile cache
+const tileCache = {};
+function getTileImage(src, z, x, y) {
+  if (!src.url) return null;
+  const key = `${src.url}_${z}_${x}_${y}`;
+  if (tileCache[key]) return tileCache[key] === "err" ? null : tileCache[key];
+  if (tileCache[key] === "loading") return null;
+  tileCache[key] = "loading";
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.onload = () => { tileCache[key] = img; requestRender(); };
+  img.onerror = () => { tileCache[key] = "err"; };
+  img.src = src.url.replace("{z}",z).replace("{x}",x).replace("{y}",y);
+  return null;
+}
+
+// ============================================
+// STATE
+// ============================================
+const S = {
+  // Map view: center lat/lon + zoom level (like standard web maps, 0-19)
+  lat: 34.0, lon: -118.0, zoom: 5,
+  // Map settings
+  tileSource: "osm",
+  coordDisplay: "mgrs", // "latlon" or "mgrs"
+  showGrid: true,
+  gridOpacity: 0.25,
+  gridColor: "#4090d0",
+  gridMode: "mgrs", // "mgrs" or "latlon"
+  gridSpacing: "auto", // "auto" or meter/degree values
+  livePreview: true, // live canvas preview in editor
+  // Units
+  units: [],
+  selectedId: null, editingId: null,
+  // Interaction
+  mode: "select", placingUnitId: null,
+  isDragging: false, dragSX: 0, dragSY: 0, dragLat: 0, dragLon: 0,
+  isDraggingUnit: false, dragUnitId: null, dragOffX: 0, dragOffY: 0,
+  isPinching: false, lastPinchDist: 0,
+  // UI
+  panelOpen: true, settingsOpen: false, _skipCenter: false,
+  _isRotating: false, _rotatingUnitId: null,
+  cursorLat: 0, cursorLon: 0,
+  iconScale: 1.0, // 0.5 = small, 1.0 = medium, 1.5 = large, 2.0 = XL
+  uiScale: 1.0, // UI zoom: 1.0, 1.25, 1.5, 1.75
+  theme: "dark", // "dark" or "light"
+};
+
+let canvas, ctx, animFrameId;
+
+// ============================================
+// COORDINATE TRANSFORMS (screen <-> world pixels <-> latlon)
+// ============================================
+function getScale() { return TILE_SIZE * Math.pow(2, S.zoom); }
+function getCenterPixel() { return latlonToPixel(S.lat, S.lon, S.zoom); }
+
+function worldToScreen(lat, lon) {
+  const dpr = window.devicePixelRatio || 1;
+  const cp = getCenterPixel();
+  const wp = latlonToPixel(lat, lon, S.zoom);
+  return { x: canvas.width/2 + (wp.x - cp.x)*dpr, y: canvas.height/2 + (wp.y - cp.y)*dpr };
+}
+
+function screenToWorld(sx, sy) {
+  const dpr = window.devicePixelRatio || 1;
+  const cp = getCenterPixel();
+  const wpx = cp.x + (sx - canvas.width/2)/dpr;
+  const wpy = cp.y + (sy - canvas.height/2)/dpr;
+  return pixelToLatlon(wpx, wpy, S.zoom);
+}
+
+// ============================================
+// RENDER
+// ============================================
+function render() {
+  if (!canvas || !ctx) return;
+  const W = canvas.width, H = canvas.height;
+  const dpr = window.devicePixelRatio || 1;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = "#e8e4d8";
+  ctx.fillRect(0,0,W,H);
+  
+  // Draw tiles
+  drawTiles(W, H, dpr);
+  
+  // Draw grid overlay
+  if (S.showGrid) drawGrid(W, H, dpr);
+  
+  // Draw units
+  for (const u of S.units) {
+    if (u.lat == null) continue;
+    const sp = worldToScreen(u.lat, u.lon);
+    drawUnitOnCanvas(ctx, u, sp.x, sp.y, dpr);
+  }
+  
+  // Draw range rings
+  for (const u of S.units) {
+    if (u.lat == null || !u.showRings || !u.rangeRings?.length) continue;
+    const sp = worldToScreen(u.lat, u.lon);
+    for (const ring of u.rangeRings) {
+      if (!ring.radius_m || ring.radius_m <= 0) continue;
+      // Convert meters to pixels at current zoom/latitude
+      const mPerPx = 156543.03392 * Math.cos(u.lat * Math.PI/180) / Math.pow(2, S.zoom);
+      const radiusPx = (ring.radius_m / mPerPx) * dpr;
+      if (radiusPx < 2) continue; // too small to see
+      ctx.beginPath(); ctx.arc(sp.x, sp.y, radiusPx, 0, Math.PI*2);
+      ctx.fillStyle = ring.color || "#ff4040";
+      ctx.globalAlpha = ring.opacity || 0.1;
+      ctx.fill();
+      ctx.strokeStyle = ring.color || "#ff4040";
+      ctx.globalAlpha = Math.min((ring.opacity||0.1) + 0.3, 0.8);
+      ctx.lineWidth = 1.5 * dpr;
+      ctx.setLineDash([4*dpr, 4*dpr]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // Label
+      if (radiusPx > 20*dpr) {
+        ctx.font = `${9*dpr}px 'SF Mono', monospace`;
+        ctx.fillStyle = ring.color || "#ff4040";
+        ctx.globalAlpha = 0.9;
+        ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+        const lbl = ring.label ? `${ring.label} (${ring.radius_m >= 1000 ? (ring.radius_m/1000)+"km" : ring.radius_m+"m"})` : (ring.radius_m >= 1000 ? (ring.radius_m/1000)+"km" : ring.radius_m+"m");
+        ctx.fillText(lbl, sp.x, sp.y - radiusPx - 3*dpr);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  
+  // Selection highlight + rotation handle
+  if (S.selectedId) {
+    const sel = S.units.find(u => u.id === S.selectedId);
+    if (sel && sel.lat != null) {
+      const sp = worldToScreen(sel.lat, sel.lon);
+      const sz = getIconSize(dpr);
+      const rot = (sel.rotation || 0) * Math.PI / 180;
+      
+      ctx.save();
+      ctx.translate(sp.x, sp.y);
+      if (rot) ctx.rotate(rot);
+      
+      // Dashed selection box
+      ctx.strokeStyle = "#4a9eff"; ctx.lineWidth = 2*dpr; ctx.setLineDash([4*dpr,4*dpr]);
+      ctx.strokeRect(-sz/2-4*dpr, -sz/2-4*dpr, sz+8*dpr, sz+8*dpr);
+      ctx.setLineDash([]);
+      
+      // Rotation handle — line + circle above the unit
+      const handleDist = sz/2 + 18*dpr;
+      ctx.beginPath();
+      ctx.moveTo(0, -sz/2 - 4*dpr);
+      ctx.lineTo(0, -handleDist);
+      ctx.strokeStyle = "#4a9eff"; ctx.lineWidth = 2*dpr;
+      ctx.stroke();
+      
+      ctx.beginPath();
+      ctx.arc(0, -handleDist, 5*dpr, 0, Math.PI*2);
+      ctx.fillStyle = S._isRotating ? "#FFD700" : "#4a9eff";
+      ctx.fill();
+      ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5*dpr;
+      ctx.stroke();
+      
+      // Direction indicator — small arrow at top
+      ctx.beginPath();
+      ctx.moveTo(-4*dpr, -sz/2 - 2*dpr);
+      ctx.lineTo(0, -sz/2 - 8*dpr);
+      ctx.lineTo(4*dpr, -sz/2 - 2*dpr);
+      ctx.fillStyle = "#4a9eff";
+      ctx.fill();
+      
+      ctx.restore();
+      
+      // Rotation degree label (drawn unrotated, always readable)
+      const deg = sel.rotation || 0;
+      if (deg !== 0) {
+        ctx.save();
+        ctx.font = `bold ${10*dpr}px 'SF Mono', monospace`;
+        ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+        const labelY = sp.y - sz/2 - 24*dpr;
+        // Background pill
+        const txt = deg + "°";
+        const tw = ctx.measureText(txt).width + 6*dpr;
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        ctx.beginPath();
+        ctx.roundRect(sp.x - tw/2, labelY - 12*dpr, tw, 14*dpr, 3*dpr);
+        ctx.fill();
+        ctx.fillStyle = "#4a9eff";
+        ctx.fillText(txt, sp.x, labelY);
+        ctx.restore();
+      }
+    }
+  }
+  
+  // Placement ghost
+  if (S.mode==="place" && S.placingUnitId) {
+    const pu = S.units.find(u=>u.id===S.placingUnitId);
+    if (pu) {
+      const sp = worldToScreen(S.cursorLat, S.cursorLon);
+      ctx.globalAlpha = 0.5;
+      drawUnitOnCanvas(ctx, pu, sp.x, sp.y, dpr);
+      ctx.globalAlpha = 1;
+    }
+  }
+}
+
+function drawTiles(W, H, dpr) {
+  const src = TILE_SOURCES[S.tileSource];
+  if (!src || !src.url) return;
+  
+  const z = Math.floor(S.zoom);
+  const scale = Math.pow(2, S.zoom - z); // fractional zoom scale
+  const cp = latlonToPixel(S.lat, S.lon, z);
+  const tileW = TILE_SIZE * scale * dpr;
+  
+  // Which tiles are visible
+  const halfW = W / (2*dpr), halfH = H / (2*dpr);
+  const minTX = Math.floor((cp.x - halfW/scale) / TILE_SIZE);
+  const maxTX = Math.floor((cp.x + halfW/scale) / TILE_SIZE);
+  const minTY = Math.floor((cp.y - halfH/scale) / TILE_SIZE);
+  const maxTY = Math.floor((cp.y + halfH/scale) / TILE_SIZE);
+  const maxTile = Math.pow(2, z) - 1;
+  
+  for (let ty = Math.max(0,minTY); ty <= Math.min(maxTile,maxTY); ty++) {
+    for (let tx = Math.max(0,minTX); tx <= Math.min(maxTile,maxTX); tx++) {
+      const img = getTileImage(src, z, tx, ty);
+      // Screen position of this tile
+      const px = W/2 + (tx * TILE_SIZE - cp.x) * scale * dpr;
+      const py = H/2 + (ty * TILE_SIZE - cp.y) * scale * dpr;
+      if (img) {
+        ctx.drawImage(img, px, py, tileW, tileW);
+      }
+      // No placeholder - let background show through (less jarring than colored blocks)
+    }
+  }
+}
+
+function drawGrid(W, H, dpr) {
+  const gc = S.gridColor, op = S.gridOpacity;
+  ctx.strokeStyle = gc;
+  ctx.globalAlpha = op;
+  ctx.lineWidth = dpr;
+  ctx.font = `${9*dpr}px 'SF Mono', monospace`;
+  ctx.fillStyle = gc;
+  if (S.gridMode === "mgrs") drawGridMGRS(W, H, dpr, gc, op);
+  else drawGridLatLon(W, H, dpr, gc, op);
+  ctx.globalAlpha = 1.0;
+}
+
+// Military-standard grid label: small 100km digit + LARGE principal digits
+// fullCoord: "0327000" (7-digit northing) or "327000" (6-digit easting)
+// spacing: current grid spacing in meters
+// GZD grid: UTM zone boundaries (every 6° lon) + lat band boundaries (every 8° lat)
+function drawGridGZD(W, H, dpr, gc, op, tl, br) {
+  const gzdLetters = "CDEFGHJKLMNPQRSTUVWX";
+  const latBands = [-80,-72,-64,-56,-48,-40,-32,-24,-16,-8,0,8,16,24,32,40,48,56,64,72,84];
+  
+  // Draw zone boundaries (vertical lines every 6°)
+  const startZone = Math.floor((tl.lon + 180) / 6) * 6 - 180;
+  for (let lon = startZone; lon <= br.lon + 6; lon += 6) {
+    const s = worldToScreen(0, lon);
+    if (s.x < -10*dpr || s.x > W+10*dpr) continue;
+    ctx.beginPath(); ctx.moveTo(s.x, 0); ctx.lineTo(s.x, H); ctx.stroke();
+  }
+  
+  // Draw lat band boundaries (horizontal lines at lat band edges)
+  for (let i = 0; i < latBands.length; i++) {
+    const lat = latBands[i];
+    if (lat < br.lat - 10 || lat > tl.lat + 10) continue;
+    const s = worldToScreen(lat, 0);
+    if (s.y < -10*dpr || s.y > H+10*dpr) continue;
+    ctx.beginPath(); ctx.moveTo(0, s.y); ctx.lineTo(W, s.y); ctx.stroke();
+  }
+  
+  // Draw GZD labels centered in each zone
+  ctx.globalAlpha = Math.min(op + 0.3, 0.8);
+  const fontSize = Math.round(14 * dpr);
+  ctx.font = `bold ${fontSize}px 'SF Mono', monospace`;
+  
+  for (let lon = startZone + 3; lon <= br.lon; lon += 6) {
+    const zoneNum = Math.floor((lon + 180) / 6) + 1;
+    if (zoneNum < 1 || zoneNum > 60) continue;
+    
+    for (let bi = 0; bi < latBands.length - 1; bi++) {
+      const latMid = (latBands[bi] + latBands[bi+1]) / 2;
+      if (latMid < br.lat - 5 || latMid > tl.lat + 5) continue;
+      const s = worldToScreen(latMid, lon);
+      if (s.x < -50*dpr || s.x > W+50*dpr || s.y < -50*dpr || s.y > H+50*dpr) continue;
+      
+      const label = zoneNum + gzdLetters[bi];
+      const tw = ctx.measureText(label).width;
+      ctx.fillText(label, s.x - tw/2, s.y + fontSize*0.35);
+    }
+  }
+  
+  ctx.font = `${9*dpr}px 'SF Mono', monospace`;
+  ctx.globalAlpha = op;
+}
+
+function drawMilLabel(ctx, fullCoord, spacing, x, y, bigSize, smallSize, dpr, isEasting) {
+  const digits = fullCoord;
+  let prefix, principal;
+  
+  if (spacing >= 100000) {
+    // Show single 100km digit large
+    if (isEasting) { principal = digits.charAt(0); prefix = ""; }
+    else { principal = digits.substring(0, 2); prefix = ""; }
+  } else if (spacing >= 10000) {
+    // 10km: small 100km prefix + large 10km digit
+    if (isEasting) { prefix = digits.charAt(0); principal = digits.charAt(1); }
+    else { prefix = digits.substring(0, 2); principal = digits.charAt(2); }
+  } else if (spacing >= 1000) {
+    // 1km: small 100km prefix + large two principal digits
+    if (isEasting) { prefix = digits.charAt(0); principal = digits.substring(1, 3); }
+    else { prefix = digits.substring(0, 2); principal = digits.substring(2, 4); }
+  } else {
+    // 100m: small 100km + large three digits
+    if (isEasting) { prefix = digits.charAt(0); principal = digits.substring(1, 4); }
+    else { prefix = digits.substring(0, 2); principal = digits.substring(2, 5); }
+  }
+  
+  let cx = x;
+  if (prefix) {
+    ctx.font = `${smallSize}px 'SF Mono', monospace`;
+    ctx.fillText(prefix, cx, y - (bigSize - smallSize) * 0.3);
+    cx += ctx.measureText(prefix).width + 1*dpr;
+  }
+  ctx.font = `bold ${bigSize}px 'SF Mono', monospace`;
+  ctx.fillText(principal, cx, y);
+  // Restore font
+  ctx.font = `${9*dpr}px 'SF Mono', monospace`;
+}
+
+function drawGridMGRS(W, H, dpr, gc, op) {
+  if (S.zoom < 4) { drawGridLatLon(W, H, dpr, gc, op); return; }
+
+  const tl = screenToWorld(0, 0);
+  const br = screenToWorld(W, H);
+  const latTop = Math.min(84, Math.max(-80, tl.lat));
+  const latBot = Math.min(84, Math.max(-80, br.lat));
+  const lonLeft = tl.lon, lonRight = br.lon;
+  const centerLat = (latTop + latBot) / 2;
+  const centerLon = (lonLeft + lonRight) / 2;
+  const isSouth = centerLat < 0;
+
+  // At z4-z6: show GZD grid only (zone boundaries + lat band boundaries)
+  if (S.zoom < 7 && S.gridSpacing === "auto") {
+    drawGridGZD(W, H, dpr, gc, op, tl, br);
+    return;
+  }
+
+  let spacing;
+  if (S.gridSpacing === "auto") {
+    if (S.zoom >= 16) spacing = 100;
+    else if (S.zoom >= 13) spacing = 1000;
+    else if (S.zoom >= 10) spacing = 10000;
+    else spacing = 100000;
+  } else { spacing = parseFloat(S.gridSpacing); }
+
+  const centerZone = Math.max(1, Math.min(60, Math.floor((centerLon + 180) / 6) + 1));
+  const utmTop = latlonToUTM(latTop, centerLon);
+  const utmBot = latlonToUTM(latBot, centerLon);
+  const rawMinN = Math.min(utmTop.northing, utmBot.northing);
+  const rawMaxN = Math.max(utmTop.northing, utmBot.northing);
+  let minN = Math.floor(rawMinN / spacing) * spacing;
+  let maxN = Math.ceil(rawMaxN / spacing) * spacing;
+  // Ensure we always have at least a couple lines visible
+  if (maxN - minN < spacing * 2) { minN -= spacing; maxN += spacing; }
+
+  // MGRS helpers
+  const gzdLetters = "CDEFGHJKLMNPQRSTUVWX";
+  const colLettersAll = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const rowLettersEven = "ABCDEFGHJKLMNPQRSTUV";
+  const rowLettersOdd = "FGHJKLMNPQRSTUVABCDE";
+  function mgrs100kLetters(zn, e, n) {
+    const set = (zn - 1) % 6;
+    const col = Math.floor(e / 100000);
+    const row = Math.floor(n / 100000) % 20;
+    const l1 = colLettersAll[((set*8) + col - 1) % 24] || "?";
+    const l2 = (set % 2 === 0 ? rowLettersEven : rowLettersOdd)[row % 20] || "?";
+    return l1 + l2;
+  }
+
+  // Vertical line segments for tilt
+  const vSegs = S.zoom < 8 ? 3 : S.zoom < 12 ? 5 : S.zoom < 15 ? 8 : 4;
+
+  // === NORTHING LINES (horizontal) ===
+  const nCount = Math.round((maxN - minN) / spacing) + 1;
+  const bigFont = Math.round((spacing <= 1000 ? 12 : spacing <= 10000 ? 11 : 10) * dpr);
+  const smallFont = Math.round(7 * dpr);
+  
+  for (let i = 0; i < nCount && i < 100; i++) {
+    const n = minN + i * spacing;
+    if (n < 0 || n > 10000000) continue;
+    const p = utmToLatlon(500000, n, centerZone, isSouth);
+    const sy = worldToScreen(p.lat, centerLon).y;
+    if (sy < -10*dpr || sy > H+10*dpr) continue;
+    ctx.beginPath(); ctx.moveTo(0, sy); ctx.lineTo(W, sy); ctx.stroke();
+    
+    // Military-style label: small prefix + LARGE principal digits
+    ctx.globalAlpha = Math.min(op + 0.4, 0.95);
+    const fullN = Math.round(n).toString().padStart(7, "0");
+    drawMilLabel(ctx, fullN, spacing, 4*dpr, sy - 4*dpr, bigFont, smallFont, dpr, false);
+    ctx.globalAlpha = op;
+  }
+
+  // === EASTING LINES (vertical with tilt) + 100km labels ===
+  const leftZone = Math.max(1, Math.floor((lonLeft + 180) / 6) + 1);
+  const rightZone = Math.min(60, Math.floor((lonRight + 180) / 6) + 1);
+  // Cap zones based on zoom - at low zoom we see many zones but each has few lines
+  const maxZones = S.zoom < 6 ? 20 : S.zoom < 8 ? 15 : 12;
+
+  for (let zi = 0; zi < maxZones; zi++) {
+    const z = leftZone + zi;
+    const zoneCM = (z - 1) * 6 - 180 + 3;
+    const visLeft = Math.max(lonLeft, zoneCM - 3);
+    const visRight = Math.min(lonRight, zoneCM + 3);
+    if (visLeft >= visRight) continue;
+
+    // Compute visible easting range within this zone
+    const utmL = latlonToUTMforZone(centerLat, visLeft, z);
+    const utmR = latlonToUTMforZone(centerLat, visRight, z);
+    const eLeft = Math.max(166000, Math.min(utmL.easting, utmR.easting));
+    const eRight = Math.min(834000, Math.max(utmL.easting, utmR.easting));
+    let eMin = Math.floor(eLeft / spacing) * spacing;
+    let eMax = Math.ceil(eRight / spacing) * spacing;
+    if (eMax - eMin < spacing * 2) { eMin -= spacing; eMax += spacing; }
+    const eCount = Math.round((eMax - eMin) / spacing) + 1;
+    const nRng = rawMaxN - rawMinN;
+
+    for (let i = 0; i < eCount && i < 100; i++) {
+      const e = eMin + i * spacing;
+      if (e < 100000 || e > 900000) continue;
+
+      // Polyline with multiple segments for tilt
+      const pts = [];
+      let anyOn = false;
+      for (let si = 0; si <= vSegs; si++) {
+        const n = Math.max(1, Math.min(9999999, rawMinN + nRng * si / vSegs));
+        const p = utmToLatlon(e, n, z, isSouth);
+        const s = worldToScreen(p.lat, p.lon);
+        pts.push(s);
+        if (s.x >= -20*dpr && s.x <= W+20*dpr) anyOn = true;
+      }
+      if (!anyOn) continue;
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let si = 1; si < pts.length; si++) ctx.lineTo(pts[si].x, pts[si].y);
+      ctx.stroke();
+
+      ctx.globalAlpha = Math.min(op + 0.4, 0.95);
+      const fullE = Math.round(e).toString().padStart(6, "0");
+      const lx = pts[pts.length-1].x + 3*dpr;
+      drawMilLabel(ctx, fullE, spacing, lx, 16*dpr, bigFont, smallFont, dpr, true);
+      ctx.globalAlpha = op;
+    }
+
+    // === 100km SQUARE LABELS ===
+    if (spacing <= 100000 && S.zoom >= 6) {
+      const e100Min = Math.floor(eLeft / 100000) * 100000;
+      const e100Max = Math.ceil(eRight / 100000) * 100000;
+      const n100Min = Math.floor(rawMinN / 100000) * 100000;
+      const n100Max = Math.ceil(rawMaxN / 100000) * 100000;
+      // Scale font size with zoom
+      const fontSize = S.zoom >= 12 ? 10 : S.zoom >= 9 ? 14 : 18;
+      ctx.font = "bold " + (fontSize*dpr) + "px 'SF Mono', monospace";
+      ctx.globalAlpha = Math.min(op * 0.8, 0.45);
+
+      for (let eB = e100Min; eB < e100Max; eB += 100000) {
+        if (eB < 100000 || eB >= 900000) continue;
+        for (let nB = n100Min; nB < n100Max; nB += 100000) {
+          if (nB < 0 || nB >= 10000000) continue;
+          const letters = mgrs100kLetters(z, eB + 50000, nB + 50000);
+          // Compute GZD letter from the actual lat at this square's center
+          const pC = utmToLatlon(eB + 50000, nB + 50000, z, isSouth);
+          const gzdIdx = Math.floor((pC.lat + 80) / 8);
+          const gzdL = gzdLetters[Math.min(Math.max(gzdIdx, 0), gzdLetters.length-1)] || "?";
+          const sc = worldToScreen(pC.lat, pC.lon);
+          if (sc.x < -50*dpr || sc.x > W+50*dpr || sc.y < -50*dpr || sc.y > H+50*dpr) continue;
+          const full = z + gzdL + " " + letters;
+          const tw = ctx.measureText(full).width;
+          ctx.fillText(full, sc.x - tw/2, sc.y + fontSize*dpr*0.35);
+        }
+      }
+      ctx.font = (9*dpr) + "px 'SF Mono', monospace";
+      ctx.globalAlpha = op;
+    }
+  }
+}
+
+
+function drawGridLatLon(W, H, dpr, gc, op) {
+  const tl = screenToWorld(0, 0);
+  const br = screenToWorld(W, H);
+  let spacing;
+  if (S.gridSpacing === "auto") {
+    if (S.zoom >= 14) spacing = 0.001;
+    else if (S.zoom >= 11) spacing = 0.01;
+    else if (S.zoom >= 8) spacing = 0.1;
+    else if (S.zoom >= 5) spacing = 1;
+    else if (S.zoom >= 3) spacing = 5;
+    else spacing = 10;
+  } else {
+    spacing = parseFloat(S.gridSpacing);
+  }
+  const startLon = Math.floor(tl.lon / spacing) * spacing;
+  const startLat = Math.floor(br.lat / spacing) * spacing;
+  const decimals = spacing < 0.01 ? 3 : spacing < 1 ? 2 : 0;
+  for (let lon = startLon; lon <= br.lon; lon += spacing) {
+    const sp = worldToScreen(S.lat, lon);
+    ctx.beginPath(); ctx.moveTo(sp.x, 0); ctx.lineTo(sp.x, H); ctx.stroke();
+    ctx.globalAlpha = Math.min(op + 0.2, 0.9);
+    ctx.fillText(lon.toFixed(decimals) + "°", sp.x + 2*dpr, 12*dpr);
+    ctx.globalAlpha = op;
+  }
+  for (let lat = startLat; lat <= tl.lat; lat += spacing) {
+    const sp = worldToScreen(lat, S.lon);
+    ctx.beginPath(); ctx.moveTo(0, sp.y); ctx.lineTo(W, sp.y); ctx.stroke();
+    ctx.globalAlpha = Math.min(op + 0.2, 0.9);
+    ctx.fillText(lat.toFixed(decimals) + "°", 2*dpr, sp.y - 2*dpr);
+    ctx.globalAlpha = op;
+  }
+}
+
+// ============================================
+// DIRECT CANVAS SYMBOL RENDERER
+// ============================================
+function getIconSize(dpr) { return Math.max(40, Math.min(100, 14 * S.zoom)) * dpr * S.iconScale; }
+
+function drawUnitOnCanvas(ctx, unit, sx, sy, dpr, overrideSize) {
+  const sz = overrideSize || getIconSize(dpr);
+  const s = sz / SVG_W; // scale from SVG coords to screen
+  const rot = (unit.rotation || 0) * Math.PI / 180;
+  
+  ctx.save();
+  ctx.translate(sx, sy);
+  if (rot) ctx.rotate(rot);
+  ctx.translate(-sz/2, -sz/2);
+  ctx.scale(s, s);
+  
+  const a = AFFILIATIONS[unit.affiliation];
+  const c = a.color, sw = 3;
+  const hw = FRAME_W/2, hh = FRAME_H/2;
+  const L=CX-hw, R=CX+hw, T=CY-hh, B=CY+hh;
+  const ovalRx = FRAME_W*0.30, ovalRy = FRAME_H*0.22;
+  
+  // For diamond frames: two sets of bounds
+  // - Corner icons (X, diag) use inscribed rectangle (corners touch diamond edges)
+  // - Centered icons (racetrack, text, shapes) use full friendly size
+  const isDiamond = a.frame === "diamond";
+  let iconL, iconR, iconT, iconB, iconOvalRx, iconOvalRy;
+  if (isDiamond) {
+    const dx = hw + U*0.8, dy = hh + U*1.2;
+    // Inscribed rectangle — corners exactly touch diamond edges
+    iconL = CX - dx/2;
+    iconR = CX + dx/2;
+    iconT = CY - dy/2;
+    iconB = CY + dy/2;
+    // But oval stays at friendly proportions for consistent racetrack size
+    iconOvalRx = ovalRx;
+    iconOvalRy = ovalRy;
+  } else {
+    iconL = L; iconR = R; iconT = T; iconB = B;
+    iconOvalRx = ovalRx; iconOvalRy = ovalRy;
+  }
+  
+  // HQ staff
+  if (unit.isHQ) {
+    ctx.beginPath(); ctx.moveTo(CX, CY+hh); ctx.lineTo(CX, SVG_H-U*0.5);
+    ctx.strokeStyle="#000"; ctx.lineWidth=sw; ctx.stroke();
+  }
+  
+  // Frame
+  ctx.fillStyle = a.fill; ctx.strokeStyle = c; ctx.lineWidth = sw;
+  switch(a.frame) {
+    case "rect": case "square":
+      ctx.fillRect(L, T, FRAME_W, FRAME_H); ctx.strokeRect(L, T, FRAME_W, FRAME_H); break;
+    case "diamond": {
+      const dx=hw+U*0.8, dy=hh+U*1.2;
+      ctx.beginPath(); ctx.moveTo(CX,CY-dy); ctx.lineTo(CX+dx,CY); ctx.lineTo(CX,CY+dy); ctx.lineTo(CX-dx,CY); ctx.closePath();
+      ctx.fill(); ctx.stroke(); break;
+    }
+    case "quatrefoil": {
+      const qw=hw+U*0.3, qh=hh+U*0.3, cr=U*2;
+      ctx.beginPath(); ctx.moveTo(CX,CY-qh);
+      ctx.bezierCurveTo(CX+cr,CY-qh, CX+qw,CY-cr, CX+qw,CY);
+      ctx.bezierCurveTo(CX+qw,CY+cr, CX+cr,CY+qh, CX,CY+qh);
+      ctx.bezierCurveTo(CX-cr,CY+qh, CX-qw,CY+cr, CX-qw,CY);
+      ctx.bezierCurveTo(CX-qw,CY-cr, CX-cr,CY-qh, CX,CY-qh);
+      ctx.closePath(); ctx.fill(); ctx.stroke(); break;
+    }
+  }
+  
+  // Unit icon — use inset bounds for diamond
+  ctx.strokeStyle = c; ctx.fillStyle = c; ctx.lineWidth = sw;
+  drawIcon(ctx, unit.unitType, iconL, iconR, iconT, iconB, CX, CY, c, sw, iconOvalRx, iconOvalRy, iconR-iconL, iconB-iconT, FRAME_H);
+  
+  // Echelon
+  const ech = ECHELONS[unit.echelon];
+  if (ech) {
+    const isH = isDiamond;
+    const baseY = CY - hh - U*0.8 - (isH ? U*1.2 : 0);
+    ctx.fillStyle = "#000"; ctx.strokeStyle = "#000";
+    if (ech.type==="dot") {
+      const cnt = Math.max(1, ech.count), tw = (cnt-1)*U*0.7;
+      for (let i=0;i<cnt;i++) { ctx.beginPath(); ctx.arc(CX-tw/2+i*U*0.7, baseY, U*0.22, 0, Math.PI*2); ctx.fill(); }
+    } else if (ech.type==="bar") {
+      const tw=(ech.count-1)*U*0.45; ctx.lineWidth = U*0.12*0.6;
+      for(let i=0;i<ech.count;i++) { const x=CX-tw/2+i*U*0.45; ctx.beginPath(); ctx.moveTo(x,baseY-U*0.42); ctx.lineTo(x,baseY+U*0.42); ctx.stroke(); }
+    } else if (ech.type==="x") {
+      const tw=(ech.count-1)*U*0.9; ctx.lineWidth=2;
+      for(let i=0;i<ech.count;i++) { const x=CX-tw/2+i*U*0.9;
+        ctx.beginPath(); ctx.moveTo(x-U*0.5,baseY-U*0.5); ctx.lineTo(x+U*0.5,baseY+U*0.5); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x-U*0.5,baseY+U*0.5); ctx.lineTo(x+U*0.5,baseY-U*0.5); ctx.stroke();
+      }
+    }
+  }
+  
+  // Text labels (don't rotate — draw separately after restore if needed)
+  const fs = U*1.3;
+  ctx.fillStyle = "#000"; ctx.font = `bold ${fs}px Arial`; ctx.textBaseline = "middle";
+  const btY = CY + hh - U*0.3;
+  if (unit.designation) { ctx.textAlign = "right"; ctx.fillText(unit.designation, CX-hw-U*0.5, btY); }
+  if (unit.parentLabel) { ctx.textAlign = "left"; ctx.fillText(unit.parentLabel, CX+hw+U*0.5, btY); }
+  
+  ctx.restore();
+}
+
+function drawIcon(ctx, type, L, R, T, B, cx, cy, c, sw, ovalRx, ovalRy, fw, fh, baseFH) {
+  const dotR = baseFH * 0.13;
+  const drawRacetrack = () => {
+    ctx.beginPath();
+    ctx.moveTo(cx-ovalRx+ovalRy, cy-ovalRy);
+    ctx.lineTo(cx+ovalRx-ovalRy, cy-ovalRy);
+    ctx.arc(cx+ovalRx-ovalRy, cy, ovalRy, -Math.PI/2, Math.PI/2);
+    ctx.lineTo(cx-ovalRx+ovalRy, cy+ovalRy);
+    ctx.arc(cx-ovalRx+ovalRy, cy, ovalRy, Math.PI/2, -Math.PI/2);
+    ctx.closePath(); ctx.stroke();
+  };
+  const drawX = () => {
+    ctx.beginPath(); ctx.moveTo(L,B); ctx.lineTo(R,T); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(L,T); ctx.lineTo(R,B); ctx.stroke();
+  };
+  const drawDiag = () => { ctx.beginPath(); ctx.moveTo(L,B); ctx.lineTo(R,T); ctx.stroke(); };
+  
+  ctx.strokeStyle = c; ctx.fillStyle = c; ctx.lineWidth = sw;
+  
+  const textTypes = {military_intel:"MI",electronic_warfare:"EW",cyber:"CYBR",military_police:"MP",special_operations:"SOF",headquarters:"HQ",combined_arms:"CA",cbrn:"CBRN",forward_observer:"FO/TA",anti_tank:"AT",anti_armor:"AA",supply:"SPL",transportation:"TPT",maintenance:"MNT"};
+  
+  if (textTypes[type]) {
+    const txtScale = fw / FRAME_W; // scales down for diamond inscribed rect
+    ctx.font = `bold ${U*0.9*txtScale}px Arial`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(textTypes[type], cx, cy); return;
+  }
+  
+  switch(type) {
+    case "infantry": drawX(); break;
+    case "light_infantry": drawX(); { const rb=cy+FRAME_H*0.22,fb=cy+FRAME_H/2,g=fb-rb,lt=rb+g*0.3,lb=rb+g*0.8,lh=U*0.35,lx=cx-lh/2; ctx.beginPath();ctx.moveTo(lx,lt);ctx.lineTo(lx,lb);ctx.lineTo(lx+lh,lb);ctx.stroke(); } break;
+    case "motorized_infantry": drawX(); ctx.beginPath();ctx.moveTo(cx,cy-FRAME_H/2);ctx.lineTo(cx,cy+FRAME_H/2);ctx.stroke(); break;
+    case "mechanized_infantry": drawX(); drawRacetrack(); break;
+    case "armored_infantry": drawX(); drawRacetrack(); ctx.beginPath();ctx.moveTo(cx-ovalRx-U*0.2,cy-ovalRy);ctx.lineTo(cx-ovalRx-U*0.2,cy+ovalRy);ctx.stroke(); break;
+    case "armor": drawRacetrack(); break;
+    case "light_armor": drawRacetrack(); { const rb=cy+ovalRy,fb=cy+FRAME_H/2,g=fb-rb,lt=rb+g*0.3,lb=rb+g*0.8,lh=U*0.35,lx=cx-lh/2; ctx.beginPath();ctx.moveTo(lx,lt);ctx.lineTo(lx,lb);ctx.lineTo(lx+lh,lb);ctx.stroke(); } break;
+    case "heavy_armor": drawRacetrack(); { const rb=cy+ovalRy,fb=cy+FRAME_H/2,g=fb-rb,ht=rb+g*0.3,hb=rb+g*0.8,hm=(ht+hb)/2; ctx.beginPath();ctx.moveTo(cx-U*0.2,ht);ctx.lineTo(cx-U*0.2,hb);ctx.stroke(); ctx.beginPath();ctx.moveTo(cx+U*0.2,ht);ctx.lineTo(cx+U*0.2,hb);ctx.stroke(); ctx.beginPath();ctx.moveTo(cx-U*0.2,hm);ctx.lineTo(cx+U*0.2,hm);ctx.stroke(); } break;
+    case "armor_wheeled": drawRacetrack(); { const rb=cy+ovalRy,fb=cy+FRAME_H/2,g=fb-rb,lt=rb+g*0.3,lb=rb+g*0.8,cr=(lb-lt)/2*0.85,ccY=(lt+lb)/2,fH=(ovalRx-ovalRy)*0.85; ctx.beginPath();ctx.arc(cx-fH,ccY,cr,0,Math.PI*2);ctx.stroke(); ctx.beginPath();ctx.arc(cx,ccY,cr,0,Math.PI*2);ctx.stroke(); ctx.beginPath();ctx.arc(cx+fH,ccY,cr,0,Math.PI*2);ctx.stroke(); } break;
+    case "armored_recon": drawRacetrack(); drawDiag(); break;
+    case "cavalry": drawDiag(); break;
+    case "artillery": ctx.beginPath(); ctx.arc(cx,cy,dotR,0,Math.PI*2); ctx.fill(); break;
+    case "mechanized_artillery": drawRacetrack(); ctx.beginPath();ctx.arc(cx,cy,dotR,0,Math.PI*2);ctx.fill(); break;
+    case "rocket_artillery": { const r=dotR; ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill(); const chW=baseFH*0.18,chH=baseFH*0.09,gap=baseFH*0.04,chBase=cy-r-baseFH*0.05; for(let i=0;i<2;i++){const yy=chBase-i*(chH+gap); ctx.beginPath();ctx.moveTo(cx-chW,yy);ctx.lineTo(cx,yy-chH);ctx.lineTo(cx+chW,yy);ctx.stroke();} } break;
+    case "mortar": { const r=dotR,vb=cy+r+U*0.2; ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill(); ctx.beginPath();ctx.moveTo(cx,cy+r);ctx.lineTo(cx,vb+U*0.6);ctx.stroke(); ctx.beginPath();ctx.moveTo(cx-U*0.5,vb+U*0.9);ctx.lineTo(cx,vb+U*0.4);ctx.stroke(); ctx.beginPath();ctx.moveTo(cx+U*0.5,vb+U*0.9);ctx.lineTo(cx,vb+U*0.4);ctx.stroke(); } break;
+    case "air_defense": { const sc=fw/FRAME_W; ctx.beginPath();ctx.moveTo(cx-U*1.2*sc,cy+U*0.4*sc);ctx.lineTo(cx,cy-U*0.8*sc);ctx.lineTo(cx+U*1.2*sc,cy+U*0.4*sc);ctx.stroke(); ctx.beginPath();ctx.moveTo(cx-U*1.2*sc,cy+U*sc);ctx.lineTo(cx+U*1.2*sc,cy+U*sc);ctx.stroke(); } break;
+    case "engineer": case "combat_engineer": { const sc=fw/FRAME_W; ctx.beginPath();ctx.moveTo(cx-U*1.5*sc,cy+U*0.5*sc);ctx.lineTo(cx-U*1.5*sc,cy-U*0.5*sc);ctx.lineTo(cx-U*0.9*sc,cy-U*0.5*sc);ctx.lineTo(cx-U*0.9*sc,cy);ctx.lineTo(cx-U*0.3*sc,cy);ctx.lineTo(cx-U*0.3*sc,cy-U*0.5*sc);ctx.lineTo(cx+U*0.3*sc,cy-U*0.5*sc);ctx.lineTo(cx+U*0.3*sc,cy);ctx.lineTo(cx+U*0.9*sc,cy);ctx.lineTo(cx+U*0.9*sc,cy-U*0.5*sc);ctx.lineTo(cx+U*1.5*sc,cy-U*0.5*sc);ctx.lineTo(cx+U*1.5*sc,cy+U*0.5*sc);ctx.closePath();ctx.stroke(); } break;
+    case "signal": { const sc=fw/FRAME_W; ctx.beginPath();ctx.moveTo(cx-U*sc,cy+U*0.6*sc);ctx.lineTo(cx-U*0.3*sc,cy-U*0.6*sc);ctx.lineTo(cx+U*0.3*sc,cy+U*0.6*sc);ctx.lineTo(cx+U*sc,cy-U*0.6*sc);ctx.stroke(); } break;
+    case "aviation": { const sc=fw/FRAME_W; ctx.beginPath();ctx.moveTo(cx-U*1.5*sc,cy+U*0.3);ctx.quadraticCurveTo(cx,cy-U*1.5*sc,cx+U*1.5*sc,cy+U*0.3);ctx.stroke(); ctx.beginPath();ctx.moveTo(cx-U*1.5*sc,cy+U*0.3);ctx.lineTo(cx+U*1.5*sc,cy+U*0.3);ctx.stroke(); } break;
+    case "attack_aviation": { const sc=fw/FRAME_W; ctx.beginPath();ctx.moveTo(cx-U*1.5*sc,cy+U*0.3);ctx.quadraticCurveTo(cx,cy-U*1.5*sc,cx+U*1.5*sc,cy+U*0.3);ctx.stroke(); ctx.beginPath();ctx.moveTo(cx-U*1.5*sc,cy+U*0.3);ctx.lineTo(cx+U*1.5*sc,cy+U*0.3);ctx.stroke(); drawX(); } break;
+    case "sustainment": { const sc=fw/FRAME_W; ctx.beginPath();ctx.moveTo(cx-U*0.8*sc,cy-U*0.8*sc);ctx.lineTo(cx-U*0.8*sc,cy+U*0.8*sc);ctx.stroke(); ctx.beginPath();ctx.moveTo(cx+U*0.8*sc,cy-U*0.8*sc);ctx.lineTo(cx+U*0.8*sc,cy+U*0.8*sc);ctx.stroke(); ctx.beginPath();ctx.moveTo(cx-U*0.8*sc,cy);ctx.lineTo(cx+U*0.8*sc,cy);ctx.stroke(); } break;
+    case "medical": { const sc=fw/FRAME_W; ctx.beginPath();ctx.moveTo(cx,cy-U*0.8*sc);ctx.lineTo(cx,cy+U*0.8*sc);ctx.stroke(); ctx.beginPath();ctx.moveTo(cx-U*0.8*sc,cy);ctx.lineTo(cx+U*0.8*sc,cy);ctx.stroke(); } break;
+    default: ctx.font=`${U*0.8}px Arial`;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("?",cx,cy);
+  }
+}
+
+function requestRender() { if(animFrameId)return; animFrameId=requestAnimationFrame(()=>{animFrameId=null;render();}); }
+
+function smoothPanTo(lat, lon, duration=800) {
+  const startLat = S.lat, startLon = S.lon;
+  const dLat = lat - startLat, dLon = lon - startLon;
+  const startTime = performance.now();
+  function step(now) {
+    const t = Math.min(1, (now - startTime) / duration);
+    const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t; // ease in-out quad
+    S.lat = startLat + dLat * ease;
+    S.lon = startLon + dLon * ease;
+    requestRender();
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// ============================================
+// INPUT
+// ============================================
+function getPos(e) {
+  const r=canvas.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  if(e.touches) return {x:(e.touches[0].clientX-r.left)*dpr, y:(e.touches[0].clientY-r.top)*dpr};
+  return {x:(e.clientX-r.left)*dpr, y:(e.clientY-r.top)*dpr};
+}
+function pinchDist(e) { const dx=e.touches[0].clientX-e.touches[1].clientX, dy=e.touches[0].clientY-e.touches[1].clientY; return Math.sqrt(dx*dx+dy*dy); }
+
+function hitTest(sx, sy) {
+  const sz = getIconSize(window.devicePixelRatio||1);
+  const ht = sz * 0.35; // hit radius ~70% of icon area (tighter than selection box)
+  for(let i=S.units.length-1;i>=0;i--) {
+    const u=S.units[i]; if(u.lat==null) continue;
+    const sp=worldToScreen(u.lat, u.lon);
+    if(Math.abs(sx-sp.x)<ht && Math.abs(sy-sp.y)<ht) return u;
+  }
+  return null;
+}
+
+function onDown(e) {
+  e.preventDefault();
+  if(e.touches && e.touches.length===2) { S.isPinching=true; S.lastPinchDist=pinchDist(e); return; }
+  // Capture pointer so moves/up fire on canvas even when over other elements
+  if (e.pointerId != null) canvas.setPointerCapture(e.pointerId);
+  const p=getPos(e);
+  
+  // Check rotation handle hit first
+  if (S.selectedId) {
+    const sel = S.units.find(u => u.id === S.selectedId);
+    if (sel && sel.lat != null) {
+      const sp = worldToScreen(sel.lat, sel.lon);
+      const dpr = window.devicePixelRatio || 1;
+      const sz = getIconSize(dpr);
+      const rot = (sel.rotation || 0) * Math.PI / 180;
+      const handleDist = sz/2 + 18*dpr;
+      // Handle at (0, -handleDist) in rotated space → screen space
+      const handleScreenX = sp.x + Math.sin(rot) * handleDist;
+      const handleScreenY = sp.y - Math.cos(rot) * handleDist;
+      
+      const dx = p.x - handleScreenX, dy = p.y - handleScreenY;
+      if (Math.sqrt(dx*dx + dy*dy) < 12*dpr) {
+        S._isRotating = true;
+        S._rotatingUnitId = sel.id;
+        requestRender();
+        return;
+      }
+    }
+  }
+  
+  const hit=hitTest(p.x,p.y);
+  if(S.mode==="place" && S.placingUnitId) {
+    const w=screenToWorld(p.x,p.y), u=S.units.find(u=>u.id===S.placingUnitId);
+    if(u){u.lat=w.lat;u.lon=w.lon;}
+    S.mode="select"; S.placingUnitId=null; S.selectedId=u?u.id:null;
+    updateUI(); requestRender(); return;
+  }
+  if(hit && S.mode==="select") {
+    S._pendingDrag=true; S._pendingDragId=hit.id; S._pendingDragStart=p;
+    const sp=worldToScreen(hit.lat,hit.lon);
+    S.dragOffX=p.x-sp.x; S.dragOffY=p.y-sp.y;
+    S.selectedId=hit.id; S.editingId=hit.id;
+    updateUI(); requestRender(); return;
+  }
+  S.isDragging=true; S.dragSX=p.x; S.dragSY=p.y; S.dragLat=S.lat; S.dragLon=S.lon;
+  if(!hit){S.selectedId=null;if(!S._editorPinned){S.editingId=null;S._editorTab=null;}updateUI();requestRender();}
+}
+
+function onMove(e) {
+  e.preventDefault();
+  if(S.isPinching && e.touches && e.touches.length===2) {
+    const d=pinchDist(e), scale=d/S.lastPinchDist;
+    S.zoom=Math.max(2,Math.min(19,S.zoom+Math.log2(scale)));
+    S.lastPinchDist=d; requestRender(); updateCoords(); return;
+  }
+  const p=getPos(e);
+  const w=screenToWorld(p.x,p.y); S.cursorLat=w.lat; S.cursorLon=w.lon; updateCoords();
+  
+  // Cursor change for rotation handle
+  if (S.selectedId && !S._isRotating && !S.isDraggingUnit && !S.isDragging) {
+    const sel = S.units.find(u => u.id === S.selectedId);
+    if (sel && sel.lat != null) {
+      const sp = worldToScreen(sel.lat, sel.lon);
+      const dpr = window.devicePixelRatio || 1;
+      const sz = getIconSize(dpr);
+      const rot = (sel.rotation || 0) * Math.PI / 180;
+      const handleDist = sz/2 + 18*dpr;
+      const hx = sp.x + Math.sin(rot) * handleDist;
+      const hy = sp.y - Math.cos(rot) * handleDist;
+      const dx = p.x - hx, dy = p.y - hy;
+      canvas.style.cursor = Math.sqrt(dx*dx + dy*dy) < 12*dpr ? "grab" : "";
+    } else { canvas.style.cursor = ""; }
+  } else if (S._isRotating) {
+    canvas.style.cursor = "grabbing";
+  }
+  
+  // Rotation drag
+  if (S._isRotating && S._rotatingUnitId) {
+    const u = S.units.find(u => u.id === S._rotatingUnitId);
+    if (u && u.lat != null) {
+      const sp = worldToScreen(u.lat, u.lon);
+      const angle = Math.atan2(p.x - sp.x, -(p.y - sp.y)); // atan2 with y inverted for screen coords
+      let deg = angle * 180 / Math.PI;
+      if (deg < 0) deg += 360;
+      // Snap to 5° increments
+      deg = Math.round(deg / 5) * 5;
+      u.rotation = deg % 360;
+      requestRender();
+    }
+    return;
+  }
+  
+  // Dead zone: only start unit drag after 5px movement
+  if(S._pendingDrag) {
+    const dx=p.x-S._pendingDragStart.x, dy=p.y-S._pendingDragStart.y;
+    if(Math.sqrt(dx*dx+dy*dy) > 5*(window.devicePixelRatio||1)) {
+      S.isDraggingUnit=true; S.dragUnitId=S._pendingDragId;
+      const du = S.units.find(u=>u.id===S._pendingDragId);
+      if(du) S._preMovePos = {id:du.id, lat:du.lat, lon:du.lon};
+      S._pendingDrag=false;
+    } else return;
+  }
+  
+  if(S.isDraggingUnit) {
+    const u=S.units.find(u=>u.id===S.dragUnitId);
+    if(u) { const nw=screenToWorld(p.x-S.dragOffX,p.y-S.dragOffY); u.lat=nw.lat;u.lon=nw.lon; requestRender(); }
+    return;
+  }
+  if(S.isDragging) {
+    const dpr=window.devicePixelRatio||1;
+    const dx=(p.x-S.dragSX)/dpr, dy=(p.y-S.dragSY)/dpr;
+    const scale=TILE_SIZE*Math.pow(2,S.zoom);
+    const cp=latlonToPixel(S.dragLat,S.dragLon,S.zoom);
+    const nl=pixelToLatlon(cp.x-dx,cp.y-dy,S.zoom);
+    S.lat=nl.lat; S.lon=nl.lon;
+    requestRender();
+  }
+  if(S.mode==="place") requestRender();
+}
+
+function onUp() {
+  if (S.isDraggingUnit && S._preMovePos) {
+    pushUndo("move", S._preMovePos);
+    S._preMovePos = null;
+  }
+  if (S._isRotating) {
+    S._isRotating = false;
+    S._rotatingUnitId = null;
+    canvas.style.cursor = "";
+    requestRender();
+  }
+  S.isDragging=false; S.isDraggingUnit=false; S.isPinching=false; S._pendingDrag=false;
+}
+
+function onWheel(e) {
+  e.preventDefault();
+  const delta = e.deltaY < 0 ? 0.3 : -0.3;
+  const p = getPos(e);
+  const before = screenToWorld(p.x, p.y);
+  S.zoom = Math.max(2, Math.min(19, S.zoom + delta));
+  const after = screenToWorld(p.x, p.y);
+  S.lat -= (after.lat - before.lat);
+  S.lon -= (after.lon - before.lon);
+  requestRender(); updateCoords();
+}
+
+// ============================================
+// UNIT MGMT
+// ============================================
+function createUnit(o={}) {
+  const u = { id:`u-${Date.now()}-${Math.random().toString(36).slice(2,6)}`, affiliation:"friendly", echelon:"platoon", unitType:"armor", designation:"", parentId:null, parentLabel:"", modifiers:[], isHQ:false, lat:null, lon:null,
+    rotation: 0, // degrees, 0 = north up
+    // Equipment data card
+    equipment: { vehicle:"", crew:"", weapon:"", maxRange_m:"", sensorRange_m:"", speed_kph:"", custom:[] },
+    // Range rings: [{label, radius_m, color, opacity}]
+    rangeRings: [],
+    showRings: true,
+    ...o };
+  // Auto-populate equipment from defaults if not provided
+  if (!o.equipment && EQUIPMENT_DEFAULTS[u.unitType]) {
+    const d = EQUIPMENT_DEFAULTS[u.unitType];
+    u.equipment = { ...d, custom:[] };
+  }
+  return u;
+}
+function autoPopulateEquipment(unit) {
+  const d = EQUIPMENT_DEFAULTS[unit.unitType];
+  if (!d) return;
+  const e = unit.equipment;
+  if (!e.vehicle) e.vehicle = d.vehicle;
+  if (!e.crew) e.crew = d.crew;
+  if (!e.weapon) e.weapon = d.weapon;
+  if (!e.maxRange_m) e.maxRange_m = d.maxRange_m;
+  if (!e.sensorRange_m) e.sensorRange_m = d.sensorRange_m;
+  if (!e.speed_kph) e.speed_kph = d.speed_kph;
+}
+function autoSuggestRings(unit) {
+  // Suggest range rings from equipment data if none exist
+  const e = unit.equipment;
+  const rings = [];
+  if (e.maxRange_m && parseFloat(e.maxRange_m) > 0) rings.push({ label:"Max Range", radius_m: parseFloat(e.maxRange_m), color:"#ff4040", opacity:0.15 });
+  if (e.sensorRange_m && parseFloat(e.sensorRange_m) > 0) rings.push({ label:"Sensor", radius_m: parseFloat(e.sensorRange_m), color:"#40a0ff", opacity:0.1 });
+  return rings;
+}
+// Undo stack — stores snapshots of deleted/modified units
+const undoStack = [];
+const MAX_UNDO = 30;
+
+function pushUndo(action, data) {
+  undoStack.push({ action, data, timestamp: Date.now() });
+  if (undoStack.length > MAX_UNDO) undoStack.shift();
+  updateUndoBtn();
+}
+
+function performUndo() {
+  if (!undoStack.length) return;
+  const entry = undoStack.pop();
+  if (entry.action === "delete") {
+    S.units.push(entry.data);
+    S.selectedId = entry.data.id;
+    S.editingId = entry.data.id;
+  } else if (entry.action === "move") {
+    const u = S.units.find(u => u.id === entry.data.id);
+    if (u) { u.lat = entry.data.lat; u.lon = entry.data.lon; }
+  } else if (entry.action === "update") {
+    const idx = S.units.findIndex(u => u.id === entry.data.id);
+    if (idx >= 0) S.units[idx] = entry.data;
+  }
+  updateUI(); requestRender();
+}
+
+function updateUndoBtn() {
+  const btn = document.getElementById("undo-btn");
+  if (btn) {
+    btn.style.opacity = undoStack.length ? "1" : "0.3";
+    btn.style.pointerEvents = undoStack.length ? "auto" : "none";
+    btn.title = undoStack.length ? `Undo (${undoStack.length}) — Ctrl+Z` : "Nothing to undo";
+  }
+}
+
+function addUnit() {
+  const u=createUnit(); S.units.push(u); S.selectedId=u.id; S.editingId=u.id; S.mode="place"; S.placingUnitId=u.id; updateUI(); requestRender();
+}
+function deleteUnit(id) {
+  const u = S.units.find(u => u.id === id);
+  if (u) pushUndo("delete", JSON.parse(JSON.stringify(u)));
+  S.units=S.units.filter(u=>u.id!==id);
+  if(S.selectedId===id)S.selectedId=null; if(S.editingId===id){S.editingId=null;if(!S._editorPinned)S._editorTab=null;}
+  updateUI(); requestRender();
+}
+function deleteSelectedUnit() {
+  if (S.selectedId) deleteUnit(S.selectedId);
+  else if (S.editingId) deleteUnit(S.editingId);
+}
+function updateUnit(id,ch) {
+  const u=S.units.find(u=>u.id===id); if(!u)return; Object.assign(u,ch);
+  if(ch.parentLabel!==undefined) {
+    const lb=(ch.parentLabel||"").trim().toLowerCase(), uO=ECHELONS[u.echelon]?.order??0;
+    const m=S.units.find(p=>p.id!==u.id&&p.designation&&p.designation.trim().toLowerCase()===lb&&(ECHELONS[p.echelon]?.order??0)>uO&&p.affiliation===u.affiliation);
+    u.parentId=m?m.id:null;
+  }
+  if(ch.designation!==undefined) {
+    const d=(ch.designation||"").trim().toLowerCase();
+    if(d) S.units.forEach(o=>{if(o.id===u.id)return; if(!o.parentId&&o.parentLabel&&o.parentLabel.trim().toLowerCase()===d){const oO=ECHELONS[o.echelon]?.order??0,uO=ECHELONS[u.echelon]?.order??0;if(uO>oO&&o.affiliation===u.affiliation)o.parentId=u.id;}});
+  }
+  updateUI(); requestRender();
+}
+
+// ============================================
+// UI
+// ============================================
+// ============================================
+// MGRS CONVERSION (simplified — covers most use cases)
+// ============================================
+// UTM constants
+const UTM_A = 6378137, UTM_F = 1/298.257223563, UTM_K0 = 0.9996;
+const UTM_E = Math.sqrt(2*UTM_F - UTM_F*UTM_F), UTM_E2 = UTM_E*UTM_E/(1-UTM_E*UTM_E);
+
+function latlonToUTM(lat, lon) {
+  const zoneNum = Math.floor((lon + 180) / 6) + 1;
+  const latR = lat * Math.PI/180, lonR = lon * Math.PI/180;
+  const lonOrigin = ((zoneNum - 1)*6 - 180 + 3) * Math.PI/180;
+  const sinLat = Math.sin(latR), cosLat = Math.cos(latR), tanLat = Math.tan(latR);
+  const N = UTM_A / Math.sqrt(1 - UTM_E*UTM_E*sinLat*sinLat);
+  const T = tanLat*tanLat, C = UTM_E2*cosLat*cosLat;
+  const A = cosLat*(lonR - lonOrigin);
+  const M = UTM_A*((1-UTM_E*UTM_E/4-3*Math.pow(UTM_E,4)/64)*latR - (3*UTM_E*UTM_E/8+3*Math.pow(UTM_E,4)/32)*Math.sin(2*latR) + (15*Math.pow(UTM_E,4)/256)*Math.sin(4*latR));
+  let easting = UTM_K0*N*(A+(1-T+C)*A*A*A/6+(5-18*T+T*T)*Math.pow(A,5)/120) + 500000;
+  let northing = UTM_K0*(M+N*tanLat*(A*A/2+(5-T+9*C+4*C*C)*Math.pow(A,4)/24));
+  if (lat < 0) northing += 10000000;
+  return { easting, northing, zoneNum };
+}
+
+function utmToLatlon(easting, northing, zoneNum, isSouth) {
+  const e1 = (1 - Math.sqrt(1-UTM_E*UTM_E)) / (1 + Math.sqrt(1-UTM_E*UTM_E));
+  const x = easting - 500000;
+  let y = isSouth ? northing - 10000000 : northing;
+  const M = y / UTM_K0;
+  const mu = M / (UTM_A*(1-UTM_E*UTM_E/4-3*Math.pow(UTM_E,4)/64-5*Math.pow(UTM_E,6)/256));
+  const phi1 = mu + (3*e1/2-27*Math.pow(e1,3)/32)*Math.sin(2*mu) + (21*e1*e1/16-55*Math.pow(e1,4)/32)*Math.sin(4*mu) + (151*Math.pow(e1,3)/96)*Math.sin(6*mu);
+  const sinP = Math.sin(phi1), cosP = Math.cos(phi1), tanP = Math.tan(phi1);
+  const N1 = UTM_A / Math.sqrt(1-UTM_E*UTM_E*sinP*sinP);
+  const R1 = UTM_A*(1-UTM_E*UTM_E) / Math.pow(1-UTM_E*UTM_E*sinP*sinP, 1.5);
+  const T1 = tanP*tanP, C1 = UTM_E2*cosP*cosP;
+  const D = x / (N1*UTM_K0);
+  const lat = phi1 - (N1*tanP/R1)*(D*D/2-(5+3*T1+10*C1-4*C1*C1-9*UTM_E2)*Math.pow(D,4)/24+(61+90*T1+298*C1+45*T1*T1-252*UTM_E2-3*C1*C1)*Math.pow(D,6)/720);
+  const lon = (D-(1+2*T1+C1)*Math.pow(D,3)/6+(5-2*C1+28*T1-3*C1*C1+8*UTM_E2+24*T1*T1)*Math.pow(D,5)/120) / cosP;
+  const lonOrigin = ((zoneNum - 1)*6 - 180 + 3) * Math.PI/180;
+  return { lat: lat * 180/Math.PI, lon: (lonOrigin + lon) * 180/Math.PI };
+}
+
+function latlonToUTMforZone(lat, lon, forceZone) {
+  // Same as latlonToUTM but forces a specific zone number
+  const zoneNum = forceZone;
+  const latR = lat * Math.PI/180, lonR = lon * Math.PI/180;
+  const lonOrigin = ((zoneNum - 1)*6 - 180 + 3) * Math.PI/180;
+  const sinLat = Math.sin(latR), cosLat = Math.cos(latR), tanLat = Math.tan(latR);
+  const N = UTM_A / Math.sqrt(1 - UTM_E*UTM_E*sinLat*sinLat);
+  const T = tanLat*tanLat, C = UTM_E2*cosLat*cosLat;
+  const A = cosLat*(lonR - lonOrigin);
+  const M = UTM_A*((1-UTM_E*UTM_E/4-3*Math.pow(UTM_E,4)/64)*latR - (3*UTM_E*UTM_E/8+3*Math.pow(UTM_E,4)/32)*Math.sin(2*latR) + (15*Math.pow(UTM_E,4)/256)*Math.sin(4*latR));
+  let easting = UTM_K0*N*(A+(1-T+C)*A*A*A/6+(5-18*T+T*T)*Math.pow(A,5)/120) + 500000;
+  let northing = UTM_K0*(M+N*tanLat*(A*A/2+(5-T+9*C+4*C*C)*Math.pow(A,4)/24));
+  if (lat < 0) northing += 10000000;
+  return { easting, northing, zoneNum };
+}
+
+// Parse MGRS string back to lat/lon
+// Accepts: "18S UJ 23456 12345", "18SUJ2345612345", "18S UJ 234 123" (various precisions)
+function parseMGRS(str) {
+  if (!str) return null;
+  str = str.replace(/\s+/g, "").toUpperCase();
+  // Match: zone number (1-2 digits) + band letter + 2 column/row letters + even-length numeric
+  const m = str.match(/^(\d{1,2})([CDEFGHJKLMNPQRSTUVWX])([A-HJ-NP-Z])([A-HJ-NP-V])(\d+)$/);
+  if (!m) return null;
+  const zoneNum = parseInt(m[1]);
+  const bandLetter = m[2];
+  const col100k = m[3];
+  const row100k = m[4];
+  const digits = m[5];
+  if (zoneNum < 1 || zoneNum > 60 || digits.length % 2 !== 0) return null;
+  
+  const precision = digits.length / 2; // 1=10km, 2=1km, 3=100m, 4=10m, 5=1m
+  const eStr = digits.substring(0, precision);
+  const nStr = digits.substring(precision);
+  const multiplier = Math.pow(10, 5 - precision);
+  const eDigits = parseInt(eStr) * multiplier;
+  const nDigits = parseInt(nStr) * multiplier;
+  
+  // Decode 100km square letters back to easting/northing
+  const colLetters = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const set = (zoneNum - 1) % 6;
+  const colIdx = colLetters.indexOf(col100k);
+  const e100k = ((colIdx - (set * 8) + 1) % 24 + 24) % 24 + 1;
+  
+  const rowLettersEven = "ABCDEFGHJKLMNPQRSTUV";
+  const rowLettersOdd = "FGHJKLMNPQRSTUVABCDE";
+  const rowSet = set % 2 === 0 ? rowLettersEven : rowLettersOdd;
+  const rowIdx = rowSet.indexOf(row100k);
+  if (rowIdx < 0) return null;
+  
+  const easting = e100k * 100000 + eDigits;
+  
+  // Determine hemisphere from band letter
+  const bandIdx = "CDEFGHJKLMNPQRSTUVWX".indexOf(bandLetter);
+  const bandLat = -80 + bandIdx * 8;
+  const isSouth = bandLat < 0;
+  
+  // Northing: need to find the right 100km northing that falls in the correct band
+  // Row letters repeat every 2,000,000m. Find the northing closest to the band center.
+  const bandCenterLat = bandLetter === 'X' ? 72 + 6 : bandLat + 4;
+  const approxN = latlonToUTMforZone(bandCenterLat, ((zoneNum - 1) * 6 - 180 + 3), zoneNum).northing;
+  const baseN = Math.floor(approxN / 2000000) * 2000000;
+  let northing = baseN + rowIdx * 100000 + nDigits;
+  // Adjust if off by a cycle
+  if (northing < approxN - 1000000) northing += 2000000;
+  if (northing > approxN + 1000000) northing -= 2000000;
+  
+  const result = utmToLatlon(easting, northing, zoneNum, isSouth);
+  if (result.lat < -80 || result.lat > 84) return null;
+  return result;
+}
+
+function latLonToMGRS(lat, lon) {
+  if (lat < -80 || lat > 84) return `${lat.toFixed(4)}° ${lon.toFixed(4)}°`;
+  const zones = "CDEFGHJKLMNPQRSTUVWX";
+  const utm = latlonToUTM(lat, lon);
+  const zoneLetter = zones[Math.floor((lat + 80) / 8)];
+  const set = (utm.zoneNum - 1) % 6;
+  const col100k = Math.floor(utm.easting / 100000);
+  const row100k = Math.floor(utm.northing / 100000) % 20;
+  const colLetters = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const rowLetters = set % 2 === 0 ? "ABCDEFGHJKLMNPQRSTUV" : "FGHJKLMNPQRSTUVABCDE";
+  const l1 = colLetters[((set*8) + col100k - 1) % 24] || "?";
+  const l2 = rowLetters[row100k % 20] || "?";
+  const e5 = Math.round(utm.easting % 100000).toString().padStart(5,"0");
+  const n5 = Math.round(utm.northing % 100000).toString().padStart(5,"0");
+  return `${utm.zoneNum}${zoneLetter} ${l1}${l2} ${e5} ${n5}`;
+}
+
+function updateCoords() {
+  const el=document.getElementById("coords");
+  if(!el) return;
+  if (S.coordDisplay === "mgrs") {
+    el.textContent = `${latLonToMGRS(S.cursorLat, S.cursorLon)}  z${S.zoom.toFixed(1)}`;
+  } else {
+    el.textContent=`${S.cursorLat.toFixed(4)}° ${S.cursorLon.toFixed(4)}°  z${S.zoom.toFixed(1)}`;
+  }
+}
+function updateUI() { renderSidePanel(); renderEditor(); renderModeBar(); updateCoords(); }
+
+function renderSidePanel() {
+  const panel=document.getElementById("unit-list"), pt=document.getElementById("panel-title");
+  if(!panel)return; if(pt)pt.textContent=`Units (${S.units.length})`;
+  let h="";
+  for(const u of S.units) {
+    const pl=u.lat!=null, sel=S.selectedId===u.id, lb=u.designation||UNIT_TYPES[u.unitType]||"Unit";
+    const veh = u.equipment?.vehicle ? `<div style="font-size:8px;color:var(--text-dim);margin-top:1px;">${u.equipment.vehicle}</div>` : "";
+    h+=`<div class="unit-item ${sel?"selected":""} ${pl?"placed":"unplaced"}" data-id="${u.id}"><div>${pl?"":"○ "}${lb} <span class="aff">(${ECHELONS[u.echelon]?.label||""})</span>${veh}</div><span class="aff">${pl?"✓":"unplaced"}</span></div>`;
+  }
+  if(!S.units.length) h=`<div style="padding:20px;text-align:center;color:#4a5568;font-size:10px;">No units yet</div>`;
+  panel.innerHTML=h;
+  panel.querySelectorAll(".unit-item").forEach(el=>{
+    el.addEventListener("click",()=>{
+      const id=el.dataset.id; S.selectedId=id; S.editingId=id;
+      updateUI(); requestRender();
+    });
+    el.addEventListener("dblclick",()=>{
+      const id=el.dataset.id; const u=S.units.find(u=>u.id===id);
+      if(u&&u.lat!=null) smoothPanTo(u.lat, u.lon, 800);
+    });
+  });
+}
+
+function renderEditor() {
+  const ct=document.getElementById("editor"); if(!ct)return;
+  if(!S.editingId){ct.innerHTML="";ct.style.display="none";return;}
+  const u=S.units.find(u=>u.id===S.editingId); if(!u){ct.style.display="none";return;}
+  ct.style.display="block";
+  // Fixed height prevents jump — drag handle to resize
+  if (!S._editorHeight) S._editorHeight = Math.round(window.innerHeight * 0.45);
+  ct.style.height = S._editorHeight + "px";
+  if (!u.equipment) u.equipment = { vehicle:"", crew:"", weapon:"", maxRange_m:"", sensorRange_m:"", speed_kph:"", custom:[] };
+  if (!u.rangeRings) u.rangeRings = [];
+  if (u.showRings === undefined) u.showRings = true;
+  const lp=u.parentId?S.units.find(p=>p.id===u.parentId):null;
+  const activeTab = S._editorTab || "symbol";
+  
+  // Build icon grid HTML
+  let iconGridHTML = "";
+  const openCats = S._openCats || {"Infantry, Tanks & Artillery":true};
+  for (const cat of UNIT_CATEGORIES) {
+    const isOpen = openCats[cat.name];
+    iconGridHTML += `<div class="icon-cat ${isOpen?"open":""}" data-cat="${cat.name}">${cat.name}</div>`;
+    if (isOpen) {
+      iconGridHTML += `<div class="icon-grid">`;
+      for (const t of cat.types) {
+        iconGridHTML += `<div class="icon-cell ${u.unitType===t?"active":""}" data-type="${t}" title="${UNIT_TYPES[t]}"><canvas width="112" height="92"></canvas><span class="icon-tooltip">${UNIT_TYPES[t]}</span></div>`;
+      }
+      iconGridHTML += `</div>`;
+    }
+  }
+  
+  // Build equipment HTML
+  const eq = u.equipment;
+  let customFieldsHTML = (eq.custom||[]).map((cf,i) => `<div class="eq-row"><input class="field-input" value="${esc(cf.key||"")}" placeholder="Field name" data-cust-key="${i}" style="width:70px;font-size:10px;"><input class="field-input" value="${esc(cf.value||"")}" placeholder="Value" data-cust-val="${i}" style="flex:1;font-size:10px;"><button class="btn danger" data-del-cust="${i}" style="padding:2px 5px;font-size:9px;">✕</button></div>`).join("");
+  
+  // Build range rings HTML
+  let ringsHTML = u.rangeRings.map((r,i) => `<div class="ring-row"><input class="field-input" value="${esc(r.label||"")}" placeholder="Label" data-ring-label="${i}" style="width:65px;font-size:10px;"><input class="field-input" value="${r.radius_m||""}" placeholder="m" data-ring-radius="${i}" style="width:55px;font-size:10px;" type="number"><input type="color" value="${r.color||"#ff4040"}" data-ring-color="${i}" style="width:24px;height:22px;border:none;padding:0;cursor:pointer;"><input type="range" min="0.05" max="0.5" step="0.05" value="${r.opacity||0.15}" data-ring-opacity="${i}" style="width:45px;"><button class="btn danger" data-del-ring="${i}" style="padding:2px 5px;font-size:9px;">✕</button></div>`).join("");
+  
+  ct.innerHTML=`
+    <div class="editor-drag-handle" id="editor-drag"><div class="grip"></div></div>
+    <div class="editor-grid">
+      <div class="editor-full" style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div id="editor-preview-mini" style="flex-shrink:0;"></div>
+          <div>
+            <span style="font-size:11px;font-weight:700;color:var(--text-bright);">${u.designation||UNIT_TYPES[u.unitType]||"New Unit"}</span>
+            <div style="font-size:8px;color:var(--text-dim);">${AFFILIATIONS[u.affiliation].label} ${ECHELONS[u.echelon]?.label||""} ${UNIT_TYPES[u.unitType]||""}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:4px;">
+          <button class="btn ${S._editorPinned?"active":""}" data-action="pin" title="${S._editorPinned?"Unpin editor":"Pin editor open"}">📌</button>
+          <button class="btn danger" data-action="delete">Del</button>
+          <button class="btn" data-action="close">✕</button>
+        </div>
+      </div>
+    </div>
+    <div class="ed-tabs">
+      <button class="ed-tab ${activeTab==="symbol"?"active":""}" data-tab="symbol">Symbol</button>
+      <button class="ed-tab ${activeTab==="equip"?"active":""}" data-tab="equip">Equipment</button>
+      <button class="ed-tab ${activeTab==="rings"?"active":""}" data-tab="rings">Range Rings</button>
+    </div>
+    <div class="ed-tab-content ${activeTab==="symbol"?"active":""}" id="tab-symbol">
+      <div class="editor-grid">
+        <div class="editor-full" style="display:flex;gap:8px;">
+          <div style="flex:1;"><span class="field-label">Designation</span><input class="field-input" data-field="designation" value="${esc(u.designation)}" placeholder="e.g., 1-67 AR"></div>
+          <div style="flex:1;"><span class="field-label">Higher HQ</span><input class="field-input" data-field="parentLabel" value="${esc(u.parentLabel)}" placeholder="e.g., 2 ABCT">
+            ${lp?`<div style="font-size:8px;color:#40a060;margin-top:2px;">✓ ${esc(lp.designation)}</div>`:""}</div>
+        </div>
+        <div class="editor-full"><span class="field-label">Affiliation</span><div class="btn-row">${Object.entries(AFFILIATIONS).map(([k,v])=>`<button class="btn ${u.affiliation===k?"active":""}" data-aff="${k}"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${v.fill};border:1px solid #000;margin-right:3px;vertical-align:middle;"></span>${v.label}</button>`).join("")}</div></div>
+        <div class="editor-full"><span class="field-label">Echelon</span><div class="btn-row">${Object.entries(ECHELONS).map(([k,v])=>`<button class="btn ${u.echelon===k?"active":""}" data-ech="${k}">${v.label}</button>`).join("")}</div></div>
+        <div class="editor-full"><span class="field-label">Unit Type</span>${iconGridHTML}</div>
+        <div class="editor-full"><span class="field-label">Modifiers</span><div class="btn-row">${Object.entries(MODIFIER_OPTIONS).map(([k,v])=>`<button class="btn ${(u.modifiers||[]).includes(k)?"active":""}" data-mod="${k}">${(u.modifiers||[]).includes(k)?"✓ ":""}${v}</button>`).join("")}<button class="btn ${u.isHQ?"active":""}" data-action="toggleHQ">${u.isHQ?"✓ ":""}HQ</button></div></div>
+        <div class="editor-full"><span class="field-label">Rotation</span>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input class="field-input" id="rotation-deg" type="number" min="0" max="359" step="5" value="${u.rotation||0}" style="width:calc(56px * var(--ui-scale));text-align:center;">
+            <span style="font-size:calc(10px * var(--ui-scale));color:var(--text-dim);">°</span>
+            <button class="btn" id="rotation-reset" style="font-size:calc(8px * var(--ui-scale));padding:2px 6px;">0°</button>
+          </div>
+        </div>
+        <div class="editor-full">
+          <span class="field-label">Position ${u.lat!=null?`<span style="color:#40a060;font-weight:400;">(placed)</span>`:`<span style="color:#FFD700;font-weight:400;">(unplaced)</span>`}</span>
+          <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
+            <select class="field-input" id="coord-mode" style="width:auto;flex:0 0 auto;">
+              <option value="mgrs" ${S.coordDisplay==="mgrs"?"selected":""}>MGRS</option>
+              <option value="latlon" ${S.coordDisplay!=="mgrs"?"selected":""}>Lat/Long</option>
+            </select>
+            <div id="coord-inputs" style="display:flex;gap:4px;flex:1;align-items:center;">
+            ${S.coordDisplay==="mgrs" ?
+              `<input class="field-input" id="coord-mgrs" value="${u.lat!=null?latLonToMGRS(u.lat,u.lon):""}" placeholder="e.g., 18S UJ 23456 12345" style="flex:1;">` :
+              `<input class="field-input" id="coord-lat" value="${u.lat!=null?u.lat.toFixed(6):""}" placeholder="Lat" style="flex:1;">
+               <input class="field-input" id="coord-lon" value="${u.lon!=null?u.lon.toFixed(6):""}" placeholder="Long" style="flex:1;">`
+            }
+            </div>
+            <button class="btn" id="coord-apply" style="flex-shrink:0;">Apply</button>
+            <button class="btn" data-action="reposition" style="flex-shrink:0;">Map</button>
+          </div>
+          ${u.lat!=null?`<div style="font-size:8px;color:var(--text-dim);margin-top:2px;">${S.coordDisplay==="mgrs" ? u.lat.toFixed(5)+"°, "+u.lon.toFixed(5)+"°" : latLonToMGRS(u.lat, u.lon)}</div>`:""}
+        </div>
+      </div>
+    </div>
+    <div class="ed-tab-content ${activeTab==="equip"?"active":""}" id="tab-equip">
+      <div style="padding:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span class="field-label" style="margin:0;">Equipment Data</span>
+          <button class="btn" id="equip-auto" style="font-size:8px;padding:2px 6px;">Auto-fill Defaults</button>
+        </div>
+        <div class="eq-row"><span class="eq-label">Vehicle</span><input class="field-input" data-eq="vehicle" value="${esc(eq.vehicle||"")}" style="flex:1;font-size:10px;"></div>
+        <div class="eq-row"><span class="eq-label">Crew</span><input class="field-input" data-eq="crew" value="${eq.crew||""}" style="width:50px;font-size:10px;" type="number"></div>
+        <div class="eq-row"><span class="eq-label">Weapon</span><input class="field-input" data-eq="weapon" value="${esc(eq.weapon||"")}" style="flex:1;font-size:10px;"></div>
+        <div class="eq-row"><span class="eq-label">Max Range</span><input class="field-input" data-eq="maxRange_m" value="${eq.maxRange_m||""}" style="width:70px;font-size:10px;" type="number"><span style="font-size:9px;color:var(--text-dim);">m</span></div>
+        <div class="eq-row"><span class="eq-label">Sensor</span><input class="field-input" data-eq="sensorRange_m" value="${eq.sensorRange_m||""}" style="width:70px;font-size:10px;" type="number"><span style="font-size:9px;color:var(--text-dim);">m</span></div>
+        <div class="eq-row"><span class="eq-label">Speed</span><input class="field-input" data-eq="speed_kph" value="${eq.speed_kph||""}" style="width:70px;font-size:10px;" type="number"><span style="font-size:9px;color:var(--text-dim);">kph</span></div>
+        <div style="border-top:1px solid var(--panel-border);margin:8px 0 4px;"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span class="field-label" style="margin:0;">Custom Fields</span>
+          <button class="btn" id="add-custom-field" style="font-size:8px;padding:2px 6px;">+ Add</button>
+        </div>
+        ${customFieldsHTML}
+        ${!(eq.custom||[]).length?`<div style="font-size:9px;color:var(--text-dim);padding:4px 0;">No custom fields — add ammo type, fuel capacity, etc.</div>`:""}
+      </div>
+    </div>
+    <div class="ed-tab-content ${activeTab==="rings"?"active":""}" id="tab-rings">
+      <div style="padding:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span class="field-label" style="margin:0;">Range Rings</span>
+          <div style="display:flex;gap:4px;">
+            <button class="btn ${u.showRings?"active":""}" id="toggle-rings" style="font-size:8px;padding:2px 6px;">${u.showRings?"ON":"OFF"}</button>
+            <button class="btn" id="suggest-rings" style="font-size:8px;padding:2px 6px;">Auto from Equip</button>
+            <button class="btn" id="add-ring" style="font-size:8px;padding:2px 6px;">+ Add</button>
+          </div>
+        </div>
+        ${ringsHTML}
+        ${!u.rangeRings.length?`<div style="font-size:9px;color:var(--text-dim);padding:4px 0;">No range rings — add manually or auto-fill from equipment data</div>`:""}
+      </div>
+    </div>
+    </div>`;
+  
+  // Render mini preview — larger, with icon background
+  const prevMini=document.getElementById("editor-preview-mini");
+  if(prevMini) {
+    const pDpr = window.devicePixelRatio || 1, pW=Math.round(72*S.uiScale), pH=Math.round(58*S.uiScale);
+    const prevBg = {friendly:"#c8dce8", hostile:"#e8c8c8", neutral:"#c8e8c8", unknown:"#e8e0c8"}[u.affiliation] || "#c8dce8";
+    prevMini.innerHTML = `<canvas width="${pW*pDpr}" height="${pH*pDpr}" style="width:${pW}px;height:${pH}px;border-radius:4px;background:${prevBg};border:1px solid var(--input-border);"></canvas>`;
+    const pc = prevMini.querySelector("canvas");
+    if (pc) {
+      const pctx = pc.getContext("2d");
+      pctx.fillStyle = prevBg; pctx.fillRect(0, 0, pW*pDpr, pH*pDpr);
+      drawUnitOnCanvas(pctx, u, pW*pDpr/2, pH*pDpr/2 - pH*pDpr*0.06, pDpr, Math.min(pW,pH)*pDpr*1.6);
+    }
+  }
+  
+  // Render icon grid canvases — no echelon, icon fills most of the cell
+  ct.querySelectorAll(".icon-cell[data-type] canvas").forEach(cv => {
+    const type = cv.parentElement.dataset.type;
+    const pctx = cv.getContext("2d");
+    const cw = cv.width, ch = cv.height;
+    const bgColors = {friendly:"#c8dce8", hostile:"#e8c8c8", neutral:"#c8e8c8", unknown:"#e8e0c8"};
+    pctx.fillStyle = bgColors[u.affiliation] || "#c8dce8"; pctx.fillRect(0, 0, cw, ch);
+    const tempUnit = { affiliation: u.affiliation, unitType: type, echelon:"", designation:"", parentLabel:"", modifiers:[], isHQ:false };
+    // SVG viewbox is ~2x the frame size, frame center is at CY which is offset down by U
+    // Shift render up by proportional amount to visually center the frame
+    const offsetY = ch * 0.08;
+    drawUnitOnCanvas(pctx, tempUnit, cw/2, ch/2 - offsetY, 1, Math.min(cw, ch) * 1.7);
+  });
+  
+  // Tab switching — just toggle visibility, no re-render
+  ct.querySelectorAll(".ed-tab").forEach(el=>el.addEventListener("click",()=>{
+    S._editorTab = el.dataset.tab; S._skipCenter = true;
+    // Toggle tab buttons
+    ct.querySelectorAll(".ed-tab").forEach(t => t.classList.toggle("active", t.dataset.tab === S._editorTab));
+    // Toggle tab content
+    ct.querySelectorAll(".ed-tab-content").forEach(tc => tc.classList.toggle("active", tc.id === "tab-" + S._editorTab));
+  }));
+  
+  // Category toggles
+  ct.querySelectorAll(".icon-cat").forEach(el=>el.addEventListener("click",()=>{
+    if (!S._openCats) S._openCats = {"Infantry, Tanks & Artillery":true};
+    S._openCats[el.dataset.cat] = !S._openCats[el.dataset.cat];
+    S._skipCenter = true; renderEditor();
+  }));
+  
+  // Icon cell clicks
+  ct.querySelectorAll(".icon-cell[data-type]").forEach(el=>el.addEventListener("click",()=>{
+    const newType = el.dataset.type;
+    const changes = {unitType: newType};
+    // Auto-populate equipment if changing to a type with defaults and current equipment is empty
+    if (EQUIPMENT_DEFAULTS[newType] && !u.equipment.vehicle) {
+      const d = EQUIPMENT_DEFAULTS[newType];
+      u.equipment = { ...d, custom: u.equipment.custom || [] };
+    }
+    S._skipCenter = true; updateUnit(u.id, changes);
+  }));
+  
+  // Standard bindings
+  ct.querySelectorAll("[data-aff]").forEach(el=>el.addEventListener("click",()=>{S._skipCenter=true;updateUnit(u.id,{affiliation:el.dataset.aff});}));
+  ct.querySelectorAll("[data-ech]").forEach(el=>el.addEventListener("click",()=>{S._skipCenter=true;updateUnit(u.id,{echelon:el.dataset.ech});}));
+  ct.querySelectorAll("[data-mod]").forEach(el=>el.addEventListener("click",()=>{const m=el.dataset.mod,ms=(u.modifiers||[]).includes(m)?u.modifiers.filter(x=>x!==m):[...(u.modifiers||[]),m];S._skipCenter=true;updateUnit(u.id,{modifiers:ms});}));
+  
+  // Rotation controls
+  const rotDeg = document.getElementById("rotation-deg");
+  const rotReset = document.getElementById("rotation-reset");
+  if (rotDeg) rotDeg.addEventListener("input", e => { let v=parseInt(e.target.value)||0; v=((v%360)+360)%360; u.rotation=v; S._skipCenter=true; requestRender(); });
+  if (rotReset) rotReset.addEventListener("click", () => { u.rotation=0; if(rotDeg)rotDeg.value=0; S._skipCenter=true; requestRender(); });
+  
+  ct.querySelectorAll("[data-field]").forEach(el=>el.addEventListener("input",e=>{S._skipCenter=true;updateUnit(u.id,{[el.dataset.field]:e.target.value});}));
+  ct.querySelectorAll("[data-action]").forEach(el=>el.addEventListener("click",()=>{
+    const a=el.dataset.action;
+    if(a==="close"){S.editingId=null;S._editorTab=null;updateUI();}
+    if(a==="delete")deleteUnit(u.id);
+    if(a==="pin"){S._editorPinned=!S._editorPinned;S._skipCenter=true;renderEditor();}
+    if(a==="place"||a==="reposition"){S.mode="place";S.placingUnitId=u.id;updateUI();requestRender();}
+    if(a==="toggleHQ"){S._skipCenter=true;updateUnit(u.id,{isHQ:!u.isHQ});}
+  }));
+  
+  // Equipment bindings
+  ct.querySelectorAll("[data-eq]").forEach(el=>el.addEventListener("input",e=>{
+    u.equipment[el.dataset.eq] = e.target.value; S._skipCenter=true;
+  }));
+  document.getElementById("equip-auto")?.addEventListener("click",()=>{
+    autoPopulateEquipment(u); S._skipCenter=true; S._editorTab="equip"; renderEditor(); requestRender();
+  });
+  document.getElementById("add-custom-field")?.addEventListener("click",()=>{
+    if(!u.equipment.custom) u.equipment.custom = [];
+    u.equipment.custom.push({key:"", value:""}); S._skipCenter=true; S._editorTab="equip"; renderEditor();
+  });
+  ct.querySelectorAll("[data-cust-key]").forEach(el=>el.addEventListener("input",e=>{
+    u.equipment.custom[parseInt(el.dataset.custKey)].key = e.target.value;
+  }));
+  ct.querySelectorAll("[data-cust-val]").forEach(el=>el.addEventListener("input",e=>{
+    u.equipment.custom[parseInt(el.dataset.custVal)].value = e.target.value;
+  }));
+  ct.querySelectorAll("[data-del-cust]").forEach(el=>el.addEventListener("click",()=>{
+    u.equipment.custom.splice(parseInt(el.dataset.delCust), 1); S._skipCenter=true; S._editorTab="equip"; renderEditor();
+  }));
+  
+  // Range ring bindings
+  document.getElementById("toggle-rings")?.addEventListener("click",()=>{
+    u.showRings = !u.showRings; S._skipCenter=true; S._editorTab="rings"; renderEditor(); requestRender();
+  });
+  document.getElementById("add-ring")?.addEventListener("click",()=>{
+    u.rangeRings.push({label:"", radius_m:1000, color:"#ff4040", opacity:0.15}); S._skipCenter=true; S._editorTab="rings"; renderEditor(); requestRender();
+  });
+  document.getElementById("suggest-rings")?.addEventListener("click",()=>{
+    const suggested = autoSuggestRings(u);
+    if (suggested.length) { u.rangeRings = [...u.rangeRings, ...suggested]; S._skipCenter=true; S._editorTab="rings"; renderEditor(); requestRender(); }
+  });
+  ct.querySelectorAll("[data-ring-label]").forEach(el=>el.addEventListener("input",e=>{
+    u.rangeRings[parseInt(el.dataset.ringLabel)].label = e.target.value;
+  }));
+  ct.querySelectorAll("[data-ring-radius]").forEach(el=>el.addEventListener("input",e=>{
+    u.rangeRings[parseInt(el.dataset.ringRadius)].radius_m = parseFloat(e.target.value)||0; requestRender();
+  }));
+  ct.querySelectorAll("[data-ring-color]").forEach(el=>el.addEventListener("input",e=>{
+    u.rangeRings[parseInt(el.dataset.ringColor)].color = e.target.value; requestRender();
+  }));
+  ct.querySelectorAll("[data-ring-opacity]").forEach(el=>el.addEventListener("input",e=>{
+    u.rangeRings[parseInt(el.dataset.ringOpacity)].opacity = parseFloat(e.target.value); requestRender();
+  }));
+  ct.querySelectorAll("[data-del-ring]").forEach(el=>el.addEventListener("click",()=>{
+    u.rangeRings.splice(parseInt(el.dataset.delRing), 1); S._skipCenter=true; S._editorTab="rings"; renderEditor(); requestRender();
+  }));
+  
+  // Coord mode toggle
+  const coordModeEl = document.getElementById("coord-mode");
+  if(coordModeEl) coordModeEl.addEventListener("change", e => {
+    S.coordDisplay = e.target.value; S._skipCenter=true; updateCoords(); renderEditor();
+  });
+  
+  // Manual coordinate apply — supports MGRS and Lat/Long
+  const applyBtn=document.getElementById("coord-apply");
+  if(applyBtn) applyBtn.addEventListener("click",()=>{
+    const mgrsEl = document.getElementById("coord-mgrs");
+    const latEl = document.getElementById("coord-lat"), lonEl = document.getElementById("coord-lon");
+    let lat, lon, error = false;
+    
+    if (mgrsEl) {
+      // Parse MGRS input
+      const result = parseMGRS(mgrsEl.value.trim());
+      if (result) { lat = result.lat; lon = result.lon; }
+      else { error = true; mgrsEl.style.borderColor="#ff4040"; setTimeout(()=>{mgrsEl.style.borderColor="";},1500); }
+    } else if (latEl && lonEl) {
+      lat = parseFloat(latEl.value); lon = parseFloat(lonEl.value);
+      if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+        error = true;
+        latEl.style.borderColor="#ff4040"; lonEl.style.borderColor="#ff4040";
+        setTimeout(()=>{latEl.style.borderColor="";lonEl.style.borderColor="";},1500);
+      }
+    }
+    
+    if (!error && lat !== undefined && lon !== undefined) {
+      u.lat=lat; u.lon=lon;
+      S.lat=lat; S.lon=lon; S.mode="select"; S.placingUnitId=null;
+      updateUI(); requestRender();
+    }
+  });
+  // Drag handle
+  const dh=document.getElementById("editor-drag");
+  if(dh){let sy=0,sh=0;const ds=e=>{e.preventDefault();const cy=e.touches?e.touches[0].clientY:e.clientY;sy=cy;sh=ct.offsetHeight;
+    const dm=e2=>{const c=e2.touches?e2.touches[0].clientY:e2.clientY;const nh=Math.max(100,Math.min(window.innerHeight*0.85,sh+(sy-c)));ct.style.height=nh+"px";S._editorHeight=nh;S._skipCenter=true;};
+    const du=()=>{document.removeEventListener("mousemove",dm);document.removeEventListener("mouseup",du);document.removeEventListener("touchmove",dm);document.removeEventListener("touchend",du);};
+    document.addEventListener("mousemove",dm);document.addEventListener("mouseup",du);document.addEventListener("touchmove",dm,{passive:false});document.addEventListener("touchend",du);};
+    dh.addEventListener("mousedown",ds);dh.addEventListener("touchstart",ds,{passive:false});
+  }
+}
+
+function renderModeBar() {
+  const bar=document.getElementById("mode-bar"); if(!bar)return;
+  if(S.mode==="place"){
+    bar.innerHTML=`<span style="font-size:10px;color:#FFD700;font-weight:700;">TAP MAP TO PLACE UNIT</span><button class="btn" id="cancel-place" style="font-size:9px;">Cancel</button>`;
+    bar.style.display="flex";
+    document.getElementById("cancel-place")?.addEventListener("click",()=>{const u=S.units.find(u=>u.id===S.placingUnitId);if(u&&u.lat==null)deleteUnit(u.id);S.mode="select";S.placingUnitId=null;updateUI();requestRender();});
+  } else bar.style.display="none";
+}
+
+function applyTheme() {
+  document.documentElement.setAttribute("data-theme", S.theme);
+}
+function applyUIScale() {
+  document.body.style.zoom = "";
+  document.documentElement.style.setProperty("--ui-scale", S.uiScale);
+  // Force re-layout after CSS variable change
+  setTimeout(() => {
+    const c = document.getElementById("mapCanvas");
+    if (c) {
+      const dpr = window.devicePixelRatio || 1;
+      const r = c.parentElement.getBoundingClientRect();
+      const sp = document.getElementById("sidepanel");
+      const pw = (S.panelOpen && sp && !sp.classList.contains("collapsed")) ? sp.getBoundingClientRect().width : 0;
+      c.style.width = (r.width - pw) + "px";
+      c.style.height = r.height + "px";
+      c.width = (r.width - pw) * dpr;
+      c.height = r.height * dpr;
+      requestRender();
+    }
+  }, 50);
+}
+
+function renderSettings() {
+  const dd=document.getElementById("settings-dropdown"); if(!dd)return;
+  const gridColors = {"#4090d0":"Blue","#e04040":"Red","#40a040":"Green","#000000":"Black","#ffffff":"White","#ff8c00":"Orange"};
+  const isMGRS = S.gridMode === "mgrs";
+  const mgrsSpacings = {"auto":"Auto","100":"100m","1000":"1km","10000":"10km","100000":"100km"};
+  const llSpacings = {"auto":"Auto","0.001":"0.001°","0.005":"0.005°","0.01":"0.01°","0.05":"0.05°","0.1":"0.1°","0.5":"0.5°","1":"1°","5":"5°","10":"10°"};
+  const spacings = isMGRS ? mgrsSpacings : llSpacings;
+  const gDis = S.showGrid ? "" : "opacity:0.4;pointer-events:none;";
+  dd.innerHTML=`
+    <div class="settings-row"><label>Map Source</label><select class="field-input" id="set-tiles" style="width:120px;">${Object.entries(TILE_SOURCES).map(([k,v])=>`<option value="${k}" ${S.tileSource===k?"selected":""}>${v.name}</option>`).join("")}</select></div>
+    <div class="settings-row"><label>Coordinates</label><select class="field-input" id="set-coords" style="width:120px;"><option value="mgrs" ${S.coordDisplay==="mgrs"?"selected":""}>MGRS</option><option value="latlon" ${S.coordDisplay==="latlon"?"selected":""}>Lat/Lon</option></select></div>
+    <div class="settings-row"><label>Icon Size</label><select class="field-input" id="set-iconsize" style="width:120px;"><option value="0.6" ${S.iconScale===0.6?"selected":""}>Small</option><option value="1.0" ${S.iconScale===1.0?"selected":""}>Medium</option><option value="1.25" ${S.iconScale===1.25?"selected":""}>Medium+</option><option value="1.4" ${S.iconScale===1.4?"selected":""}>Large</option><option value="2.0" ${S.iconScale===2.0?"selected":""}>X-Large</option></select></div>
+    <div class="settings-row"><label>Theme</label><select class="field-input" id="set-theme" style="width:120px;"><option value="dark" ${S.theme==="dark"?"selected":""}>Dark</option><option value="light" ${S.theme==="light"?"selected":""}>Light</option></select></div>
+    <div class="settings-row"><label>UI Scale</label><select class="field-input" id="set-uiscale" style="width:120px;"><option value="1.0" ${S.uiScale===1.0?"selected":""}>100%</option><option value="1.15" ${S.uiScale===1.15?"selected":""}>115%</option><option value="1.25" ${S.uiScale===1.25?"selected":""}>125%</option><option value="1.5" ${S.uiScale===1.5?"selected":""}>150%</option><option value="1.75" ${S.uiScale===1.75?"selected":""}>175%</option></select></div>
+    <div class="settings-row"><label>Live Preview</label><button class="btn ${S.livePreview?"active":""}" id="set-live" style="min-width:40px;">${S.livePreview?"ON":"OFF"}</button></div>
+    <div style="border-top:1px solid var(--panel-border);margin:4px 0;"></div>
+    <div class="settings-row"><label>Grid</label><button class="btn ${S.showGrid?"active":""}" id="set-grid" style="min-width:40px;">${S.showGrid?"ON":"OFF"}</button></div>
+    <div class="settings-row" style="${gDis}"><label>Grid Mode</label><select class="field-input" id="set-grid-mode" style="width:120px;"><option value="mgrs" ${S.gridMode==="mgrs"?"selected":""}>MGRS / UTM</option><option value="latlon" ${S.gridMode==="latlon"?"selected":""}>Lat/Lon</option></select></div>
+    <div class="settings-row" style="${gDis}"><label>Grid Color</label><select class="field-input" id="set-grid-color" style="width:120px;">${Object.entries(gridColors).map(([k,v])=>`<option value="${k}" ${S.gridColor===k?"selected":""}>${v}</option>`).join("")}</select></div>
+    <div class="settings-row" style="${gDis}"><label>Grid Opacity</label><input type="range" id="set-grid-opacity" min="0.05" max="1.0" step="0.05" value="${S.gridOpacity}" style="width:80px;accent-color:var(--active-border);"><span id="grid-opacity-val" style="font-size:9px;color:var(--text-dim);width:28px;text-align:right;">${Math.round(S.gridOpacity*100)}%</span></div>
+    <div class="settings-row" style="${gDis}"><label>Grid Spacing</label><select class="field-input" id="set-grid-spacing" style="width:120px;">${Object.entries(spacings).map(([k,v])=>`<option value="${k}" ${S.gridSpacing===k?"selected":""}>${v}</option>`).join("")}</select></div>
+  `;
+  document.getElementById("set-tiles").addEventListener("change",e=>{S.tileSource=e.target.value;requestRender();});
+  document.getElementById("set-coords").addEventListener("change",e=>{S.coordDisplay=e.target.value;updateCoords();});
+  document.getElementById("set-iconsize").addEventListener("change",e=>{S.iconScale=parseFloat(e.target.value);requestRender();});
+  document.getElementById("set-theme").addEventListener("change",e=>{S.theme=e.target.value;applyTheme();});
+  document.getElementById("set-uiscale").addEventListener("change",e=>{S.uiScale=parseFloat(e.target.value);applyUIScale();setTimeout(resize,100);});
+  document.getElementById("set-live").addEventListener("click",()=>{S.livePreview=!S.livePreview;renderSettings();if(S.editingId)renderEditor();});
+  document.getElementById("set-grid").addEventListener("click",()=>{S.showGrid=!S.showGrid;renderSettings();requestRender();});
+  document.getElementById("set-grid-mode").addEventListener("change",e=>{S.gridMode=e.target.value;S.gridSpacing="auto";renderSettings();requestRender();});
+  document.getElementById("set-grid-color").addEventListener("change",e=>{S.gridColor=e.target.value;requestRender();});
+  document.getElementById("set-grid-opacity").addEventListener("input",e=>{S.gridOpacity=parseFloat(e.target.value);document.getElementById("grid-opacity-val").textContent=Math.round(S.gridOpacity*100)+"%";requestRender();});
+  document.getElementById("set-grid-spacing").addEventListener("change",e=>{S.gridSpacing=e.target.value;requestRender();});
+}
+
+// ============================================
+// I/O BRIDGE — Native app vs Web fallbacks
+// ============================================
+const IO = {
+  isNative: () => !!window.nativeBridge?.isNative,
+  platform: () => window.nativeBridge?.platform || 'web',
+
+  // --- File Import ---
+  requestImport(accept) {
+    if (IO.isNative()) {
+      window.nativeBridge.requestImport();
+      return;
+    }
+    // Web: trigger file input
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = accept || '.tacmap,.geojson,.json,.kml,.kmz';
+    input.onchange = e => {
+      const file = e.target.files[0];
+      if (file) IO._readFile(file);
+    };
+    input.click();
+  },
+
+  _readFile(file) {
+    const ext = file.name.split('.').pop().toLowerCase();
+    const reader = new FileReader();
+    reader.onload = e => {
+      IO._processImport(ext, e.target.result, file.name);
+    };
+    reader.readAsText(file);
+  },
+
+  _processImport(ext, content, filename) {
+    try {
+      if (ext === 'tacmap') {
+        IO.projectLoad(content, filename);
+      } else if (ext === 'geojson' || ext === 'json') {
+        IO.importGeoJSON(content, filename);
+      } else if (ext === 'kml') {
+        IO.importKML(content, filename);
+      } else {
+        IO._notify('Unsupported file type: .' + ext, 'error');
+      }
+    } catch (err) {
+      IO._notify('Import failed: ' + err.message, 'error');
+      console.error('Import error:', err);
+    }
+  },
+
+  // --- File Export (browser download) ---
+  requestExport(filename, content, mimeType) {
+    if (IO.isNative()) {
+      window.nativeBridge.requestExport(filename, content);
+      return;
+    }
+    const blob = new Blob([content], { type: mimeType || 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  },
+
+  // --- Project Save ---
+  projectSave(filename) {
+    const project = {
+      version: '1.0',
+      type: 'tacmap-project',
+      created: new Date().toISOString(),
+      app: 'ScheffMap v2.1',
+      map: {
+        lat: S.lat, lon: S.lon, zoom: S.zoom,
+        tileSource: S.tileSource,
+        coordDisplay: S.coordDisplay,
+        showGrid: S.showGrid, gridOpacity: S.gridOpacity, gridColor: S.gridColor,
+        gridMode: S.gridMode, gridSpacing: S.gridSpacing,
+        iconScale: S.iconScale, theme: S.theme,
+      },
+      units: S.units.map(u => ({...u})),
+    };
+    const json = JSON.stringify(project, null, 2);
+    const fname = filename || `scheffmap-${new Date().toISOString().slice(0,10)}.tacmap`;
+    IO.requestExport(fname, json, 'application/json');
+    IO._notify('Project saved: ' + fname);
+  },
+
+  // --- Project Load ---
+  projectLoad(content, filename) {
+    const data = typeof content === 'string' ? JSON.parse(content) : content;
+    if (data.type !== 'tacmap-project') {
+      // Might be raw unit array or older format
+      if (Array.isArray(data)) {
+        data.forEach(u => { if (!S.units.find(x => x.id === u.id)) S.units.push(createUnit(u)); });
+        IO._notify(`Imported ${data.length} units`);
+        updateUI(); requestRender(); return;
+      }
+      throw new Error('Not a valid .tacmap project file');
+    }
+    // Restore map state
+    if (data.map) {
+      S.lat = data.map.lat ?? S.lat;
+      S.lon = data.map.lon ?? S.lon;
+      S.zoom = data.map.zoom ?? S.zoom;
+      S.tileSource = data.map.tileSource ?? S.tileSource;
+      S.coordDisplay = data.map.coordDisplay ?? S.coordDisplay;
+      S.showGrid = data.map.showGrid ?? S.showGrid;
+      S.gridOpacity = data.map.gridOpacity ?? S.gridOpacity;
+      S.gridColor = data.map.gridColor ?? S.gridColor;
+      S.gridMode = data.map.gridMode ?? S.gridMode;
+      S.gridSpacing = data.map.gridSpacing ?? S.gridSpacing;
+      S.iconScale = data.map.iconScale ?? S.iconScale;
+      if (data.map.theme) { S.theme = data.map.theme; applyTheme(); }
+    }
+    // Restore units
+    if (data.units) {
+      S.units = data.units.map(u => createUnit(u));
+    }
+    S.selectedId = null; S.editingId = null; S.mode = 'select';
+    IO._notify(`Project loaded: ${filename || 'untitled'} (${S.units.length} units)`);
+    updateUI(); requestRender();
+  },
+
+  // --- Autosave to localStorage ---
+  _autosaveKey: 'scheffmap_autosave',
+  _autosaveInterval: null,
+
+  autosaveStart() {
+    // Save every 30 seconds
+    IO._autosaveInterval = setInterval(() => IO.autosaveNow(), 30000);
+    // Also save on page unload
+    window.addEventListener('beforeunload', () => IO.autosaveNow());
+  },
+
+  autosaveNow() {
+    try {
+      const data = {
+        version: '1.0', type: 'tacmap-project',
+        saved: new Date().toISOString(),
+        map: { lat: S.lat, lon: S.lon, zoom: S.zoom, tileSource: S.tileSource, coordDisplay: S.coordDisplay, showGrid: S.showGrid, gridOpacity: S.gridOpacity, gridColor: S.gridColor, gridMode: S.gridMode, gridSpacing: S.gridSpacing, iconScale: S.iconScale, theme: S.theme },
+        units: S.units.map(u => ({...u})),
+      };
+      localStorage.setItem(IO._autosaveKey, JSON.stringify(data));
+    } catch(e) { console.warn('Autosave failed:', e); }
+  },
+
+  autosaveRestore() {
+    try {
+      const raw = localStorage.getItem(IO._autosaveKey);
+      if (!raw) return false;
+      const data = JSON.parse(raw);
+      if (data.type !== 'tacmap-project' || !data.units?.length) return false;
+      IO.projectLoad(JSON.stringify(data), 'autosave');
+      return true;
+    } catch(e) { return false; }
+  },
+
+  autosaveClear() {
+    localStorage.removeItem(IO._autosaveKey);
+  },
+
+  // --- GeoJSON Import ---
+  importGeoJSON(content, filename) {
+    const data = typeof content === 'string' ? JSON.parse(content) : content;
+    let features = [];
+    if (data.type === 'FeatureCollection') features = data.features || [];
+    else if (data.type === 'Feature') features = [data];
+    else throw new Error('Invalid GeoJSON');
+
+    let imported = 0;
+    for (const f of features) {
+      if (!f.geometry) continue;
+      const props = f.properties || {};
+      if (f.geometry.type === 'Point') {
+        const [lon, lat] = f.geometry.coordinates;
+        const u = createUnit({
+          lat, lon,
+          designation: props.name || props.designation || props.title || '',
+          unitType: props.unitType || props.sidc_function || 'infantry',
+          affiliation: props.affiliation || 'friendly',
+          echelon: props.echelon || 'platoon',
+        });
+        S.units.push(u);
+        imported++;
+      }
+      // Future: handle LineString/Polygon as graphics
+    }
+    IO._notify(`Imported ${imported} units from ${filename || 'GeoJSON'}`);
+    updateUI(); requestRender();
+  },
+
+  // --- GeoJSON Export ---
+  exportGeoJSON(filename) {
+    const features = S.units.filter(u => u.lat != null).map(u => ({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [u.lon, u.lat] },
+      properties: {
+        id: u.id, designation: u.designation, unitType: u.unitType,
+        affiliation: u.affiliation, echelon: u.echelon, isHQ: u.isHQ,
+        rotation: u.rotation, modifiers: u.modifiers,
+        equipment: u.equipment, rangeRings: u.rangeRings,
+      }
+    }));
+    const geojson = { type: 'FeatureCollection', features };
+    const fname = filename || `scheffmap-${new Date().toISOString().slice(0,10)}.geojson`;
+    IO.requestExport(fname, JSON.stringify(geojson, null, 2), 'application/geo+json');
+    IO._notify('Exported ' + features.length + ' units as GeoJSON');
+  },
+
+  // --- KML Import ---
+  importKML(content, filename) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(content, 'text/xml');
+    const placemarks = doc.querySelectorAll('Placemark');
+    let imported = 0;
+    for (const pm of placemarks) {
+      const name = pm.querySelector('name')?.textContent || '';
+      const coords = pm.querySelector('coordinates')?.textContent?.trim();
+      if (!coords) continue;
+      // KML coordinates: lon,lat,alt
+      const parts = coords.split(',');
+      if (parts.length < 2) continue;
+      const lon = parseFloat(parts[0]);
+      const lat = parseFloat(parts[1]);
+      if (isNaN(lat) || isNaN(lon)) continue;
+      const u = createUnit({ lat, lon, designation: name, unitType: 'infantry', affiliation: 'friendly', echelon: 'platoon' });
+      S.units.push(u);
+      imported++;
+    }
+    IO._notify(`Imported ${imported} placemarks from ${filename || 'KML'}`);
+    updateUI(); requestRender();
+  },
+
+  // --- KML Export ---
+  exportKML(filename) {
+    const placemarks = S.units.filter(u => u.lat != null).map(u => {
+      const nm = IO._xmlEscape(u.designation || u.unitType);
+      const desc = IO._xmlEscape(u.affiliation + ' ' + u.echelon + ' ' + u.unitType);
+      return '    <Placemark>\n      <'+'name>'+nm+'</'+'name>\n      <description>'+desc+'</description>\n      <Point><coordinates>'+u.lon+','+u.lat+',0</coordinates></Point>\n    </Placemark>';
+    }).join('\n');
+    const kml = '<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2">\n<Document>\n  <'+'name>ScheffMap Export</'+'name>\n  <description>Exported '+new Date().toISOString()+'</description>\n'+placemarks+'\n</Document>\n</kml>';
+    const fname = filename || `scheffmap-${new Date().toISOString().slice(0,10)}.kml`;
+    IO.requestExport(fname, kml, 'application/vnd.google-earth.kml+xml');
+    IO._notify('Exported ' + S.units.filter(u=>u.lat!=null).length + ' units as KML');
+  },
+
+  _xmlEscape(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); },
+
+  // --- Offline Tile Manager ---
+  tiles: {
+    async downloadRegion(bounds, minZoom, maxZoom, onProgress) {
+      if (!('caches' in window)) { IO._notify('Cache API not available', 'error'); return; }
+      const cache = await caches.open('tacmap-tiles-v1');
+      const src = TILE_SOURCES[S.tileSource];
+      if (!src) return;
+      
+      let total = 0, done = 0, failed = 0;
+      // Count tiles first
+      for (let z = minZoom; z <= maxZoom; z++) {
+        const n = Math.pow(2, z);
+        const xMin = Math.floor((bounds.west + 180) / 360 * n);
+        const xMax = Math.floor((bounds.east + 180) / 360 * n);
+        const yMin = Math.floor((1 - Math.log(Math.tan(bounds.north * Math.PI / 180) + 1 / Math.cos(bounds.north * Math.PI / 180)) / Math.PI) / 2 * n);
+        const yMax = Math.floor((1 - Math.log(Math.tan(bounds.south * Math.PI / 180) + 1 / Math.cos(bounds.south * Math.PI / 180)) / Math.PI) / 2 * n);
+        total += (xMax - xMin + 1) * (yMax - yMin + 1);
+      }
+
+      if (total > 5000) {
+        IO._notify(`Too many tiles (${total}). Reduce area or zoom range.`, 'error');
+        return;
+      }
+
+      IO._notify(`Downloading ${total} tiles...`);
+
+      for (let z = minZoom; z <= maxZoom; z++) {
+        const n = Math.pow(2, z);
+        const xMin = Math.floor((bounds.west + 180) / 360 * n);
+        const xMax = Math.floor((bounds.east + 180) / 360 * n);
+        const yMin = Math.floor((1 - Math.log(Math.tan(bounds.north * Math.PI / 180) + 1 / Math.cos(bounds.north * Math.PI / 180)) / Math.PI) / 2 * n);
+        const yMax = Math.floor((1 - Math.log(Math.tan(bounds.south * Math.PI / 180) + 1 / Math.cos(bounds.south * Math.PI / 180)) / Math.PI) / 2 * n);
+
+        for (let x = xMin; x <= xMax; x++) {
+          for (let y = yMin; y <= yMax; y++) {
+            const url = src.url.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+            try {
+              const resp = await fetch(url);
+              if (resp.ok) await cache.put(url, resp);
+              else failed++;
+            } catch(e) { failed++; }
+            done++;
+            if (onProgress) onProgress(done, total, failed);
+          }
+        }
+      }
+      IO._notify(`Downloaded ${done - failed}/${total} tiles` + (failed ? ` (${failed} failed)` : ''));
+    },
+
+    async getCacheSize() {
+      if (!('caches' in window)) return { count: 0, bytes: 0 };
+      try {
+        const cache = await caches.open('tacmap-tiles-v1');
+        const keys = await cache.keys();
+        return { count: keys.length, bytes: 0 }; // Can't easily get byte size
+      } catch(e) { return { count: 0, bytes: 0 }; }
+    },
+
+    async clearCache() {
+      await caches.delete('tacmap-tiles-v1');
+      IO._notify('Tile cache cleared');
+    }
+  },
+
+  // --- Notification toast ---
+  _notify(msg, type) {
+    const existing = document.getElementById('io-toast');
+    if (existing) existing.remove();
+    const toast = document.createElement('div');
+    toast.id = 'io-toast';
+    const bg = type === 'error' ? 'rgba(180,40,40,0.95)' : 'rgba(12,18,25,0.95)';
+    const border = type === 'error' ? '#ff4040' : '#4a9eff';
+    toast.style.cssText = `position:fixed;top:48px;left:50%;transform:translateX(-50%);background:${bg};border:1px solid ${border};border-radius:8px;padding:8px 16px;z-index:10000;font-size:12px;color:#e0e8f0;font-family:inherit;backdrop-filter:blur(8px);white-space:nowrap;animation:io-fade-in 0.2s ease-out;`;
+    toast.textContent = msg;
+    if (!document.getElementById('io-toast-style')) {
+      const s = document.createElement('style');
+      s.id = 'io-toast-style';
+      s.textContent = '@keyframes io-fade-in{from{opacity:0;transform:translateX(-50%) translateY(-10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}';
+      document.head.appendChild(s);
+    }
+    document.body.appendChild(toast);
+    setTimeout(() => toast?.remove(), 3500);
+  },
+};
+
+// Wire up native bridge callbacks
+if (window.nativeBridge) {
+  window.nativeBridge.onFileImported = (ext, content) => IO._processImport(ext, content, 'imported.' + ext);
+}
+
+// ============================================
+// FILE MENU
+// ============================================
+function renderFileMenu() {
+  const dd = document.getElementById('file-dropdown'); if (!dd) return;
+  const unitCount = S.units.length;
+  const placedCount = S.units.filter(u => u.lat != null).length;
+
+  dd.innerHTML = `
+    <div style="padding:2px 0;font-size:9px;color:var(--text-dim);letter-spacing:1px;margin-bottom:4px;">PROJECT</div>
+    <button class="btn" id="file-new" style="width:100%;text-align:left;margin:2px 0;padding:4px 8px;font-size:11px;">🗋 New Project</button>
+    <button class="btn" id="file-save" style="width:100%;text-align:left;margin:2px 0;padding:4px 8px;font-size:11px;">💾 Save Project (.tacmap)</button>
+    <button class="btn" id="file-open" style="width:100%;text-align:left;margin:2px 0;padding:4px 8px;font-size:11px;">📂 Open Project...</button>
+    <div style="border-top:1px solid var(--panel-border);margin:6px 0;"></div>
+    <div style="padding:2px 0;font-size:9px;color:var(--text-dim);letter-spacing:1px;margin-bottom:4px;">IMPORT</div>
+    <button class="btn" id="file-import" style="width:100%;text-align:left;margin:2px 0;padding:4px 8px;font-size:11px;">📥 Import File...</button>
+    <div style="font-size:9px;color:var(--text-dim);padding:0 8px;">.tacmap · .geojson · .kml · .json</div>
+    <div style="border-top:1px solid var(--panel-border);margin:6px 0;"></div>
+    <div style="padding:2px 0;font-size:9px;color:var(--text-dim);letter-spacing:1px;margin-bottom:4px;">EXPORT (${placedCount} units)</div>
+    <button class="btn" id="file-export-geojson" style="width:100%;text-align:left;margin:2px 0;padding:4px 8px;font-size:11px;" ${placedCount?'':'disabled'}>🌐 Export GeoJSON</button>
+    <button class="btn" id="file-export-kml" style="width:100%;text-align:left;margin:2px 0;padding:4px 8px;font-size:11px;" ${placedCount?'':'disabled'}>🌍 Export KML</button>
+    <div style="border-top:1px solid var(--panel-border);margin:6px 0;"></div>
+    <div style="padding:2px 0;font-size:9px;color:var(--text-dim);letter-spacing:1px;margin-bottom:4px;">OFFLINE TILES</div>
+    <button class="btn" id="file-dl-tiles" style="width:100%;text-align:left;margin:2px 0;padding:4px 8px;font-size:11px;">⬇ Download Current View</button>
+    <button class="btn" id="file-cache-info" style="width:100%;text-align:left;margin:2px 0;padding:4px 8px;font-size:11px;">📊 Cache Info</button>
+    <button class="btn" id="file-cache-clear" style="width:100%;text-align:left;margin:2px 0;padding:4px 8px;font-size:11px;color:#ff6060;">🗑 Clear Tile Cache</button>
+    <div style="border-top:1px solid var(--panel-border);margin:6px 0;"></div>
+    <div style="font-size:9px;color:var(--text-dim);padding:2px 8px;">${unitCount} units total · autosave active</div>
+  `;
+
+  // Wire events
+  document.getElementById('file-new').onclick = () => {
+    if (S.units.length && !confirm('Start new project? Unsaved changes will be lost.')) return;
+    S.units = []; S.selectedId = null; S.editingId = null; S.mode = 'select';
+    S.lat = 34; S.lon = -118; S.zoom = 5;
+    IO.autosaveClear();
+    closeFileMenu();
+    IO._notify('New project started');
+    updateUI(); requestRender();
+  };
+
+  document.getElementById('file-save').onclick = () => {
+    closeFileMenu();
+    IO.projectSave();
+  };
+
+  document.getElementById('file-open').onclick = () => {
+    closeFileMenu();
+    IO.requestImport('.tacmap');
+  };
+
+  document.getElementById('file-import').onclick = () => {
+    closeFileMenu();
+    IO.requestImport();
+  };
+
+  document.getElementById('file-export-geojson').onclick = () => {
+    closeFileMenu();
+    IO.exportGeoJSON();
+  };
+
+  document.getElementById('file-export-kml').onclick = () => {
+    closeFileMenu();
+    IO.exportKML();
+  };
+
+  document.getElementById('file-dl-tiles').onclick = () => {
+    closeFileMenu();
+    downloadCurrentView();
+  };
+
+  document.getElementById('file-cache-info').onclick = async () => {
+    const info = await IO.tiles.getCacheSize();
+    IO._notify(`Tile cache: ${info.count} tiles cached`);
+  };
+
+  document.getElementById('file-cache-clear').onclick = async () => {
+    if (!confirm('Clear all cached offline tiles?')) return;
+    closeFileMenu();
+    await IO.tiles.clearCache();
+  };
+}
+
+let _fileMenuOpen = false;
+function toggleFileMenu() {
+  _fileMenuOpen = !_fileMenuOpen;
+  document.getElementById('file-dropdown').classList.toggle('open', _fileMenuOpen);
+  if (_fileMenuOpen) renderFileMenu();
+  // Close settings if open
+  if (_fileMenuOpen && S.settingsOpen) {
+    S.settingsOpen = false;
+    document.getElementById('settings-dropdown').classList.remove('open');
+  }
+}
+function closeFileMenu() {
+  _fileMenuOpen = false;
+  document.getElementById('file-dropdown').classList.remove('open');
+}
+
+// Download tiles for the current viewport
+function downloadCurrentView() {
+  const dpr = window.devicePixelRatio || 1;
+  const tl = screenToWorld(0, 0);
+  const br = screenToWorld(canvas.width / dpr, canvas.height / dpr);
+  const bounds = { north: tl.lat, south: br.lat, west: tl.lon, east: br.lon };
+  const minZ = Math.max(1, Math.floor(S.zoom) - 1);
+  const maxZ = Math.min(17, Math.floor(S.zoom) + 2);
+
+  // Show progress
+  const prog = document.createElement('div');
+  prog.id = 'tile-progress';
+  prog.style.cssText = 'position:fixed;top:48px;left:50%;transform:translateX(-50%);background:rgba(12,18,25,0.95);border:1px solid #4a9eff;border-radius:8px;padding:10px 20px;z-index:10000;font-size:12px;color:#e0e8f0;font-family:inherit;backdrop-filter:blur(8px);';
+  prog.textContent = 'Calculating tiles...';
+  document.body.appendChild(prog);
+
+  IO.tiles.downloadRegion(bounds, minZ, maxZ, (done, total, failed) => {
+    const pct = Math.round(done / total * 100);
+    prog.textContent = `Downloading tiles: ${done}/${total} (${pct}%)` + (failed ? ` · ${failed} failed` : '');
+    if (done >= total) setTimeout(() => prog?.remove(), 2000);
+  }).catch(e => {
+    prog.textContent = 'Download failed: ' + e.message;
+    setTimeout(() => prog?.remove(), 3000);
+  });
+}
+
+// ============================================
+// DRAG-AND-DROP FILE IMPORT
+// ============================================
+function initDragDrop() {
+  let dragCounter = 0;
+  const overlay = document.getElementById('drag-overlay');
+
+  document.addEventListener('dragenter', e => {
+    e.preventDefault();
+    dragCounter++;
+    if (overlay) overlay.style.display = 'flex';
+  });
+
+  document.addEventListener('dragleave', e => {
+    e.preventDefault();
+    dragCounter--;
+    if (dragCounter <= 0) { dragCounter = 0; if (overlay) overlay.style.display = 'none'; }
+  });
+
+  document.addEventListener('dragover', e => { e.preventDefault(); });
+
+  document.addEventListener('drop', e => {
+    e.preventDefault();
+    dragCounter = 0;
+    if (overlay) overlay.style.display = 'none';
+    const file = e.dataTransfer?.files?.[0];
+    if (file) IO._readFile(file);
+  });
+}
+
+// ============================================
+// INIT
+// ============================================
+function init() {
+  document.getElementById("app").innerHTML=`
+    <div class="topbar">
+      <div class="topbar-left"><div class="topbar-dot"></div><span class="topbar-title">SCHEFFMAP</span><span class="topbar-ver">v2.1</span></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="topbar-coords" id="coords"></span>
+        <button class="btn" id="undo-btn" style="padding:2px 6px;opacity:0.3;pointer-events:none;" title="Nothing to undo">↩</button>
+        <button class="btn" id="file-btn" style="padding:2px 6px;">☰ FILE</button>
+        <button class="btn" id="settings-btn" style="padding:2px 6px;">⚙ MAP</button>
+        <button class="btn" id="fullscreen-btn" style="padding:2px 6px;">⛶</button>
+      </div>
+    </div>
+    <div class="main">
+      <canvas id="mapCanvas"></canvas>
+      <button class="toggle-panel" id="toggle-panel">▶</button>
+      <div class="sidepanel" id="sidepanel">
+        <div class="panel-resize" id="panel-resize"></div>
+        <div class="panel-header"><span class="panel-title" id="panel-title">Units (0)</span><button class="btn gold" id="add-unit">+ New Unit</button></div>
+        <div class="unit-list" id="unit-list"></div>
+      </div>
+      <div class="editor-overlay" id="editor" style="display:none;"></div>
+      <div class="mode-bar" id="mode-bar" style="display:none;"></div>
+      <div class="zoom-ctrl" id="zoom-ctrl"><button class="btn" id="zoom-in" style="padding:6px 10px;">+</button><button class="btn" id="zoom-out" style="padding:6px 10px;">−</button><button class="btn" id="zoom-fit" style="padding:6px 8px;">FIT</button></div>
+      <div class="settings-dropdown" id="settings-dropdown"></div>
+      <div class="settings-dropdown" id="file-dropdown" style="left:auto;right:80px;"></div>
+      <div id="drag-overlay" style="display:none;position:absolute;inset:0;background:rgba(10,14,20,0.85);z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
+        <div style="font-size:48px;margin-bottom:12px;">📂</div>
+        <div style="color:#FFD700;font-size:16px;font-weight:700;">Drop file to import</div>
+        <div style="color:#8a94a0;font-size:12px;margin-top:4px;">.tacmap · .geojson · .kml · .json</div>
+      </div>
+    </div>`;
+  
+  canvas=document.getElementById("mapCanvas"); ctx=canvas.getContext("2d");
+  
+  function resize() {
+    const dpr=window.devicePixelRatio||1, r=canvas.parentElement.getBoundingClientRect();
+    const sp=document.getElementById("sidepanel");
+    const pw=(S.panelOpen && sp && !sp.classList.contains("collapsed")) ? sp.getBoundingClientRect().width : 0;
+    canvas.style.width=(r.width-pw)+"px"; canvas.style.height=r.height+"px";
+    canvas.width=(r.width-pw)*dpr; canvas.height=r.height*dpr;
+    requestRender();
+  }
+  window.addEventListener("resize",resize); resize();
+  
+  canvas.addEventListener("pointerdown",onDown); canvas.addEventListener("pointermove",onMove); canvas.addEventListener("pointerup",onUp); canvas.addEventListener("pointercancel",onUp);
+  canvas.addEventListener("dblclick", e => {
+    const p=getPos(e), hit=hitTest(p.x,p.y);
+    if(hit && hit.lat!=null) smoothPanTo(hit.lat, hit.lon, 800);
+  });
+  canvas.addEventListener("wheel",onWheel,{passive:false});
+  canvas.addEventListener("touchstart",onDown,{passive:false}); canvas.addEventListener("touchmove",onMove,{passive:false}); canvas.addEventListener("touchend",onUp);
+  
+  document.getElementById("add-unit").addEventListener("click",addUnit);
+  document.getElementById("undo-btn").addEventListener("click",performUndo);
+  
+  // Keyboard shortcuts
+  document.addEventListener("keydown", e => {
+    // Don't intercept if typing in an input
+    if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.tagName === "SELECT") return;
+    
+    // Delete/Backspace — delete selected unit
+    if (e.key === "Delete" || e.key === "Backspace") {
+      e.preventDefault();
+      deleteSelectedUnit();
+    }
+    // Ctrl+Z — undo
+    if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+      e.preventDefault();
+      performUndo();
+    }
+    // Escape — cancel placement or close editor
+    if (e.key === "Escape") {
+      if (S.mode === "place" && S.placingUnitId) {
+        const pu = S.units.find(u => u.id === S.placingUnitId);
+        if (pu && pu.lat == null) deleteUnit(pu.id);
+        S.mode = "select"; S.placingUnitId = null; updateUI(); requestRender();
+      } else if (S.editingId) {
+        S.editingId = null; S._editorTab = null; updateUI();
+      }
+    }
+  });
+  
+  document.getElementById("toggle-panel").addEventListener("click",()=>{
+    S.panelOpen=!S.panelOpen;
+    const p=document.getElementById("sidepanel"),t=document.getElementById("toggle-panel"),e=document.getElementById("editor"),z=document.getElementById("zoom-ctrl");
+    if(S.panelOpen){p.classList.remove("collapsed");t.classList.remove("shifted");t.textContent="▶";e.classList.remove("full");z.classList.remove("panel-closed");}
+    else{p.classList.add("collapsed");t.classList.add("shifted");t.textContent="◀";e.classList.add("full");z.classList.add("panel-closed");}
+    resize();
+  });
+  document.getElementById("zoom-in").addEventListener("click",()=>{S.zoom=Math.min(19,S.zoom+1);requestRender();updateCoords();});
+  document.getElementById("zoom-out").addEventListener("click",()=>{S.zoom=Math.max(2,S.zoom-1);requestRender();updateCoords();});
+  document.getElementById("fullscreen-btn").addEventListener("click",()=>{
+    const el=document.documentElement;
+    if(!document.fullscreenElement&&!document.webkitFullscreenElement){if(el.requestFullscreen)el.requestFullscreen();else if(el.webkitRequestFullscreen)el.webkitRequestFullscreen();}
+    else{if(document.exitFullscreen)document.exitFullscreen();else if(document.webkitExitFullscreen)document.webkitExitFullscreen();}
+    setTimeout(resize,300);
+  });
+  document.getElementById("zoom-fit").addEventListener("click",()=>{
+    const pl=S.units.filter(u=>u.lat!=null);
+    if(!pl.length){S.lat=34;S.lon=-118;S.zoom=5;requestRender();return;}
+    let mnLat=90,mxLat=-90,mnLon=180,mxLon=-180;
+    pl.forEach(u=>{mnLat=Math.min(mnLat,u.lat);mxLat=Math.max(mxLat,u.lat);mnLon=Math.min(mnLon,u.lon);mxLon=Math.max(mxLon,u.lon);});
+    S.lat=(mnLat+mxLat)/2; S.lon=(mnLon+mxLon)/2;
+    const dLat=Math.max(mxLat-mnLat,0.01), dLon=Math.max(mxLon-mnLon,0.01);
+    S.zoom=Math.min(16, Math.floor(Math.log2(360/Math.max(dLat,dLon))));
+    requestRender();
+  });
+  document.getElementById("settings-btn").addEventListener("click",()=>{
+    S.settingsOpen=!S.settingsOpen;
+    document.getElementById("settings-dropdown").classList.toggle("open",S.settingsOpen);
+    if(S.settingsOpen){renderSettings(); closeFileMenu();}
+  });
+  // File menu
+  document.getElementById("file-btn").addEventListener("click", toggleFileMenu);
+  // Close menus on outside click
+  document.addEventListener("click",e=>{
+    if(S.settingsOpen&&!e.target.closest("#settings-dropdown")&&!e.target.closest("#settings-btn")){S.settingsOpen=false;document.getElementById("settings-dropdown").classList.remove("open");}
+    if(_fileMenuOpen&&!e.target.closest("#file-dropdown")&&!e.target.closest("#file-btn")){closeFileMenu();}
+  });
+  
+  applyUIScale();
+  
+  // Above 1080p default icon scale to 125% and UI scale to 115%
+  const screenH = window.screen.height || 0;
+  const outerH = window.outerHeight || 0;
+  const innerH = window.innerHeight || 0;
+  if (screenH > 1080 || outerH > 1000 || innerH > 900) {
+    S.iconScale = 1.25;
+    if (S.uiScale === 1.0) { S.uiScale = 1.25; applyUIScale(); }
+  }
+  
+  // Restore saved panel width
+  const savedPW = localStorage.getItem("tacmap_panelW");
+  const defaultPW = Math.round(260 * S.uiScale);
+  const panelW = savedPW ? parseInt(savedPW) : defaultPW;
+  document.documentElement.style.setProperty("--panel-w", panelW + "px");
+  const spEl = document.getElementById("sidepanel");
+  if (spEl) { spEl.style.width = panelW + "px"; spEl.style.minWidth = panelW + "px"; }
+  
+  // Panel resize drag
+  const panelResize = document.getElementById("panel-resize");
+  const sidepanel = document.getElementById("sidepanel");
+  let _panelDragging = false;
+  panelResize.addEventListener("mousedown", e => { e.preventDefault(); _panelDragging = true; panelResize.classList.add("active"); });
+  document.addEventListener("mousemove", e => {
+    if (!_panelDragging) return;
+    const newW = Math.max(180, Math.min(window.innerWidth * 0.5, window.innerWidth - e.clientX));
+    sidepanel.style.width = newW + "px";
+    sidepanel.style.minWidth = newW + "px";
+    document.documentElement.style.setProperty("--panel-w", newW + "px");
+    resize();
+  });
+  document.addEventListener("mouseup", () => {
+    if (_panelDragging) {
+      _panelDragging = false;
+      panelResize.classList.remove("active");
+      localStorage.setItem("tacmap_panelW", Math.round(sidepanel.getBoundingClientRect().width));
+      resize();
+    }
+  });
+  
+  // Initialize drag-and-drop file import
+  initDragDrop();
+
+  // Restore autosave if available
+  if (IO.autosaveRestore()) {
+    console.log('[IO] Restored from autosave');
+  }
+
+  // Start autosave (every 30s)
+  IO.autosaveStart();
+
+  // Keyboard shortcuts for file ops
+  document.addEventListener("keydown", e => {
+    if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.tagName === "SELECT") return;
+    // Ctrl+S — save project
+    if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+      e.preventDefault();
+      IO.projectSave();
+    }
+    // Ctrl+O — open project
+    if ((e.ctrlKey || e.metaKey) && e.key === "o") {
+      e.preventDefault();
+      IO.requestImport();
+    }
+  });
+
+  updateUI(); requestRender();
+}
+
+document.addEventListener("DOMContentLoaded",init);
+</script>
+<script>
+// === PWA: Service Worker Registration & Install Prompt ===
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    console.log('[PWA] SW registered, scope:', reg.scope);
+    // Check for updates periodically
+    setInterval(() => reg.update(), 60 * 60 * 1000); // hourly
+    reg.addEventListener('updatefound', () => {
+      const nw = reg.installing;
+      nw.addEventListener('statechange', () => {
+        if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+          // New version available - show update banner
+          showPWABanner('Update available', 'Tap to refresh', () => {
+            nw.postMessage('skipWaiting');
+            window.location.reload();
+          });
+        }
+      });
+    });
+  }).catch(e => console.warn('[PWA] SW registration failed:', e));
+}
+
+// Deferred install prompt (Chrome/Edge/Samsung)
+let _deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _deferredInstallPrompt = e;
+  // Don't show immediately — wait a bit so it's not jarring
+  setTimeout(() => {
+    if (_deferredInstallPrompt && !window.matchMedia('(display-mode: standalone)').matches) {
+      showPWABanner('Install TacMap', 'Add to home screen for offline use', () => {
+        _deferredInstallPrompt.prompt();
+        _deferredInstallPrompt.userChoice.then(r => {
+          console.log('[PWA] Install:', r.outcome);
+          _deferredInstallPrompt = null;
+        });
+      });
+    }
+  }, 30000); // 30s delay
+});
+
+// Detect if running as installed PWA
+window.addEventListener('appinstalled', () => {
+  console.log('[PWA] App installed');
+  _deferredInstallPrompt = null;
+});
+
+// iOS Safari: show manual install hint
+function isIOSSafari() {
+  return /iP(hone|ad|od)/.test(navigator.userAgent) && !window.navigator.standalone && !window.matchMedia('(display-mode: standalone)').matches;
+}
+if (isIOSSafari()) {
+  setTimeout(() => {
+    showPWABanner('Install TacMap', 'Tap Share ⎙ then "Add to Home Screen"', null, 8000);
+  }, 45000); // 45s delay on iOS
+}
+
+function showPWABanner(title, subtitle, action, autoHide) {
+  // Remove existing
+  const old = document.getElementById('pwa-banner');
+  if (old) old.remove();
+
+  const banner = document.createElement('div');
+  banner.id = 'pwa-banner';
+  banner.style.cssText = `
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: rgba(12,18,25,0.95); border: 1px solid #4a9eff; border-radius: 12px;
+    padding: 12px 20px; display: flex; align-items: center; gap: 14px;
+    z-index: 10000; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5); max-width: 90vw; cursor: ${action ? 'pointer' : 'default'};
+    animation: pwa-slide-up 0.3s ease-out;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', sans-serif;
+  `;
+
+  // Icon
+  const icon = document.createElement('div');
+  icon.style.cssText = 'width:36px;height:36px;border-radius:8px;background:#1a3050;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;';
+  icon.textContent = '📍';
+  banner.appendChild(icon);
+
+  // Text
+  const text = document.createElement('div');
+  text.innerHTML = `<div style="font-size:13px;font-weight:600;color:#e0e8f0;">${title}</div>
+    <div style="font-size:11px;color:#8a94a0;margin-top:2px;">${subtitle}</div>`;
+  banner.appendChild(text);
+
+  // Close button
+  const close = document.createElement('div');
+  close.style.cssText = 'margin-left:8px;color:#8a94a0;font-size:18px;cursor:pointer;padding:4px;';
+  close.textContent = '✕';
+  close.onclick = (e) => { e.stopPropagation(); banner.remove(); };
+  banner.appendChild(close);
+
+  if (action) banner.onclick = action;
+
+  // Animation keyframes
+  if (!document.getElementById('pwa-anim-style')) {
+    const style = document.createElement('style');
+    style.id = 'pwa-anim-style';
+    style.textContent = `@keyframes pwa-slide-up { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }`;
+    document.head.appendChild(style);
+  }
+
+  document.body.appendChild(banner);
+
+  // Auto-hide
+  if (autoHide) setTimeout(() => banner?.remove(), autoHide);
+}
+</script>
+</body>
+</html>
