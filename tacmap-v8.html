@@ -31,9 +31,9 @@
 [data-theme="light"] .ed-btn.active{background:rgba(74,158,255,.15);border-color:var(--accent);color:#1a6fcc}
 [data-theme="light"] .stack-btn:hover{background:#ddd;border-color:rgba(0,0,0,.3)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{width:100%;height:100%;overflow:hidden;overscroll-behavior:none;font-family:var(--font);background:var(--bg);color:var(--fg);touch-action:none;-webkit-text-size-adjust:100%}
+html,body{width:100%;height:100%;overflow:hidden;overscroll-behavior:none;font-family:var(--font);background:#1a1a2e;color:var(--fg);touch-action:none;-webkit-text-size-adjust:100%}
 @supports (-webkit-touch-callout: none){input,select,textarea{font-size:16px!important}}
-#app{width:100%;height:100%;display:flex;flex-direction:column;background:#1a1a2e}
+#app{width:100%;height:100%;min-height:100%;display:flex;flex-direction:column;background:#1a1a2e}
 .topbar{box-sizing:border-box;padding:0 4px;padding-top:calc(4px + var(--safe-top));padding-bottom:4px;padding-left:calc(4px + var(--safe-left));padding-right:calc(4px + var(--safe-right));display:flex;align-items:center;justify-content:space-between;background:var(--panel-bg);border-bottom:1px solid var(--border);z-index:100;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);flex-shrink:0;position:relative;zoom:var(--ui-scale)}
 .topbar-left{display:flex;align-items:center;gap:6px}.topbar-dot{width:8px;height:8px;border-radius:50%;background:#555;flex-shrink:0}.topbar-dot.connected{background:var(--success);box-shadow:0 0 4px var(--success)}.topbar-dot.connecting{background:var(--warning)}.topbar-dot.error{background:var(--danger)}
 .topbar-title{font-size:13px;font-weight:700;letter-spacing:2px}.topbar-right{display:flex;align-items:center;gap:6px}.topbar-coords{font-size:10px;opacity:0.7;white-space:nowrap}
@@ -90,13 +90,13 @@ input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:20
 .layer-move-select{background:var(--btn-bg);color:var(--fg);border:1px solid var(--border);border-radius:3px;font-size:9px;font-family:var(--font);padding:1px 4px;max-width:70px;-webkit-appearance:none;appearance:none;cursor:pointer}
 .layer-rename-input{touch-action:manipulation}
 .preview-wrap{display:flex;justify-content:center;margin-bottom:8px}.preview-wrap canvas{border:1px solid var(--border);border-radius:4px;background:#2a3a4a}
-@media(max-width:700px){.topbar .btn{min-height:28px;padding:4px 8px}.float-panel{right:calc(52px + var(--safe-right));left:0;width:auto;max-height:50vh;top:auto;bottom:0;border-radius:12px 12px 0 0;padding-bottom:var(--safe-bottom)}.editor-overlay{right:0;left:0;bottom:0;width:auto;min-width:0;max-height:45vh;min-height:180px;border-radius:12px 12px 0 0;box-shadow:0 -2px 20px rgba(0,0,0,.4);animation:slideUp .2s ease-out}.layer-item{padding:8px 6px;min-height:40px}.layer-obj{padding:6px 4px;min-height:36px;font-size:11px}.layer-move-select{font-size:11px;padding:4px 6px;max-width:90px}.btn{min-height:36px;padding:6px 10px}.stack-btn{width:48px;height:48px}.zoom-ctrl .btn{width:48px;height:48px;min-height:48px;padding:0}.editor-tab{padding:8px 12px;font-size:11px}.editor-actions .btn{min-width:40px;min-height:40px;padding:6px 10px;font-size:13px}.editor-header{align-items:stretch}.editor-tabs{align-items:stretch}.editor-tab{display:flex;align-items:center}.editor-grip{height:28px}.draw-tool-btn,.ed-btn{min-height:36px}.ed-btn-row{flex-wrap:wrap;overflow:hidden}.ed-btn-row .ed-btn{min-height:36px;flex:1 1 auto;white-space:nowrap}@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}}
+@media(max-width:700px){.topbar .btn{min-height:28px;padding:4px 8px}.float-panel{right:calc(52px + var(--safe-right));left:0;width:auto;max-height:50vh;top:auto;bottom:0;border-radius:12px 12px 0 0;padding-bottom:var(--safe-bottom)}.editor-overlay{right:calc(52px + var(--safe-right));left:0;bottom:0;width:auto;min-width:0;max-height:45vh;min-height:180px;border-radius:12px 12px 0 0;box-shadow:0 -2px 20px rgba(0,0,0,.4);animation:slideUp .2s ease-out}.layer-item{padding:8px 6px;min-height:40px}.layer-obj{padding:6px 4px;min-height:36px;font-size:11px}.layer-move-select{font-size:11px;padding:4px 6px;max-width:90px}.btn{min-height:36px;padding:6px 10px}.stack-btn{width:48px;height:48px}.zoom-ctrl .btn{width:48px;height:48px;min-height:48px;padding:0}.editor-tab{padding:8px 12px;font-size:11px}.editor-actions .btn{min-width:40px;min-height:40px;padding:6px 10px;font-size:13px}.editor-header{align-items:stretch}.editor-tabs{align-items:stretch}.editor-tab{display:flex;align-items:center}.editor-grip{height:28px}.draw-tool-btn,.ed-btn{min-height:36px}.ed-btn-row{flex-wrap:wrap;overflow:hidden}.ed-btn-row .ed-btn{min-height:36px;flex:1 1 auto;white-space:nowrap}@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}}
 @media(min-width:501px) and (max-width:900px){.float-panel{width:300px}}
 @media(max-height:500px) and (min-width:700px) and (min-aspect-ratio:2/1){
 .icon-stack{flex-direction:row;top:auto;right:auto;bottom:calc(4px + var(--safe-bottom));left:50%;transform:translateX(-50%);gap:3px}
 .stack-btn{width:36px;height:36px}
 .float-panel{left:calc(4px + var(--safe-left));right:auto;top:calc(4px + var(--safe-top));bottom:auto;max-height:calc(100% - 50px - var(--safe-top) - var(--safe-bottom));width:min(280px,40vw);padding-bottom:0;border-radius:8px}
-.zoom-ctrl{flex-direction:column;bottom:calc(44px + var(--safe-bottom));right:calc(8px + var(--safe-right));top:auto;left:auto;transform:none}
+.zoom-ctrl{flex-direction:column;bottom:calc(44px + var(--safe-bottom));right:calc(12px + var(--safe-right));top:auto;left:auto;transform:none}
 .zoom-ctrl .btn{width:36px;height:36px;min-height:36px;font-size:15px;padding:0}
 .zoom-ctrl .stack-btn{width:36px;height:36px}
 .editor-overlay{left:calc(4px + var(--safe-left));right:auto;bottom:calc(44px + var(--safe-bottom));top:auto;width:min(45vw,340px);min-width:220px;max-height:calc(100% - 50px - var(--safe-top) - var(--safe-bottom));border-radius:8px;animation:slideRight .2s ease-out}
@@ -1102,7 +1102,7 @@ function renderComms(){
         h+='<div style="font-size:10px;opacity:.7;margin-bottom:8px;padding:6px;border:1px solid var(--border);border-radius:4px;background:rgba(255,255,255,.03);line-height:1.4">';
         h+='<strong>\ud83d\udc41 Visible</strong> \u2014 Peers can see this layer<br>';
         h+='<strong>\u270e Editable</strong> \u2014 Peers with edit permission can modify units/graphics on this layer<br>';
-        h+='<strong>\u2605 Primary</strong> \u2014 Prompts peers to switch to this layer for editing<br>';
+        
         h+='<div style="margin-top:4px;padding-top:4px;border-top:1px solid var(--border)">';
         h+='<strong>Two requirements for peer editing:</strong><br>';
         h+='1. Peer must have <span style="color:#44cc44">EDIT</span> permission (toggle in Room Members below)<br>';
@@ -1113,12 +1113,12 @@ function renderComms(){
       h+='<div style="font-size:10px;opacity:.5;margin-bottom:6px">Toggle layers visible/editable for peers</div>';
       function renderCommLayerRow(l){
         var rh='';const sh=n.sharedLayers[l.id]||{};
-        const isVis=!!sh.visible;const isEdit=!!sh.editable;const isPrimary=n.sharedEditLayer===l.id;
-        rh+='<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;padding:3px 4px;border-radius:4px;background:'+(isPrimary?'rgba(74,158,255,.12)':'transparent')+'">';
+        const isVis=!!sh.visible;const isEdit=!!sh.editable;
+        rh+='<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;padding:3px 4px;border-radius:4px">';
         rh+='<span style="font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(l.name)+'</span>';
         rh+='<button class="btn'+(isVis?" primary":"")+'" onclick="toggleSharedLayer(\''+l.id+'\',\'visible\')" style="padding:1px 5px;font-size:9px;min-height:24px;min-width:0" title="Visible to peers">\ud83d\udc41</button>';
         rh+='<button class="btn'+(isEdit?" primary":"")+'" onclick="toggleSharedLayer(\''+l.id+'\',\'editable\')" style="padding:1px 5px;font-size:9px;min-height:24px;min-width:0" title="Editable by peers">\u270e</button>';
-        rh+='<button class="btn'+(isPrimary?" active":"")+'" onclick="setSharedEditLayer(\''+l.id+'\')" style="padding:1px 5px;font-size:9px;min-height:24px;min-width:0;'+(isPrimary?'border-color:var(--accent)':'')+'" title="Primary edit layer">\u2605</button>';
+        
         rh+='</div>';return rh}
       /* Package layers */
       var _cpkgIds=new Set();S.packages.forEach(function(p){p.layerIds.forEach(function(id){_cpkgIds.add(id)})});
@@ -1426,16 +1426,6 @@ function renderChat(){
 
 function renderLayers(){
   let h='';
-  /* Edit scope toggle — only visible when in a room */
-  const inRoom=S._net.mode==="hosting"||S._net.mode==="connected";
-  if(inRoom){
-    const isRoom=S._net.editScope==="room";
-    h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;padding:6px 8px;border-radius:6px;background:rgba(74,158,255,.08);border:1px solid rgba(74,158,255,.2)">';
-    h+='<span style="font-size:10px;opacity:.7;flex-shrink:0">Edit:</span>';
-    h+='<button class="btn'+(isRoom?"":" primary")+'" onclick="S._net.editScope=\'local\';renderFloatingPanel()" style="flex:1;font-size:10px;padding:3px 6px;min-height:26px">Local</button>';
-    h+='<button class="btn'+(isRoom?" primary":"")+'" onclick="S._net.editScope=\'room\';renderFloatingPanel()" style="flex:1;font-size:10px;padding:3px 6px;min-height:26px">In Room</button>';
-    h+='</div>';
-  }
   h+='<div class="row" style="margin-bottom:8px"><button class="btn primary" onclick="addLayer()">+ Add Layer</button></div>';
   /* Packages section */
   const pkgLayerIds=new Set();
@@ -1792,7 +1782,7 @@ function escAttr(s){return escHtml(s)}
 /* Sanitize + truncate user strings */
 function sanitizeStr(s,maxLen){s=String(s||"");if(maxLen&&s.length>maxLen)s=s.slice(0,maxLen);return s}
 /* Length limits for user input fields */
-const APP_VERSION="10.0";
+const APP_VERSION="10.1";
 function toggleFullscreen(){
   var d=document;
   if(d.fullscreenElement||d.webkitFullscreenElement){
@@ -2796,21 +2786,20 @@ function shouldBroadcastEdit(msg){
   const n=S._net;
   /* Host always broadcasts */
   if(n.isHost)return true;
-  /* If local mode, don't broadcast edits (but still broadcast chat, hello, etc) */
+  /* Non-edit messages always broadcast */
   const editTypes=["unitAdd","unitEdit","unitDelete","graphicAdd","graphicEdit","graphicDelete"];
   if(!editTypes.includes(msg.type))return true;
   /* Wargame execution lock — peers cannot edit during execution */
   if(n.wargame.active&&n.wargame.phase==="execution")return false;
   /* Check peer has edit permission from host */
   if(n.editRequestStatus!=="approved")return false;
-  if(n.editScope==="local")return false;
-  /* In room mode: check if the layer is editable */
+  /* Check if the item's layer is editable */
   let layerId=null;
   if(msg.unit)layerId=msg.unit.layerId;
   else if(msg.graphic)layerId=msg.graphic.layerId;
   else if(msg.unitId){const u=S.units.find(x=>x.id===msg.unitId);if(u)layerId=u.layerId}
   else if(msg.graphicId){const g=S.graphics.find(x=>x.id===msg.graphicId);if(g)layerId=g.layerId}
-  if(layerId&&n.editScope==="room"){const sh=n.sharedLayers[layerId];if(!sh||!sh.editable)return false}
+  if(layerId){const sh=n.sharedLayers[layerId];if(!sh||!sh.editable)return false}
   return true}
 function netBroadcast(msg){const n=S._net;if(n.mode==="offline")return;if(!shouldBroadcastEdit(msg))return;const str=JSON.stringify(msg);if(n.isHost){n.conns.forEach(c=>{try{c.conn.send(str)}catch(e){}})}else if(n.hostConn){try{n.hostConn.send(str)}catch(e){}}}
 function netCreateRoom(){
