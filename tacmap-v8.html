@@ -198,8 +198,11 @@ const fmt=1<<fz;if(fmx<0||fmx>=fmt||fmy<0||fmy>=fmt)continue;
 const ft=tileCache.get(`${S.tileSource}/${fz}/${fmx}/${fmy}`);
 if(ft&&ft.loaded){try{const sx=(wx-(fmx<<shift))*TILE_SIZE/sub,sy=(ty-(fmy<<shift))*TILE_SIZE/sub,ss2=TILE_SIZE/sub;
 if(sx>=0&&sy>=0&&ss2>0){ctx.drawImage(ft.img,sx,sy,ss2,ss2,dx,dy,tss+1,tss+1);drawn=true}}catch(e){}}}}}
+/* Loading indicator — show tile count */
+var _loadPending=0;tileCache.forEach(function(t){if(!t.loaded&&!t.error)_loadPending++});
+if(_loadPending>0){ctx.save();ctx.fillStyle="rgba(0,0,0,.6)";ctx.font="bold "+(12*d)+"px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("Loading "+_loadPending+" tiles...",W/2,H-30*d);ctx.restore()}
 /* Keep rendering during fade-in */
-if(hasFading)requestRender();
+if(hasFading||_loadPending>0)requestRender();
 /* Debounced preload: wait 300ms after last render to preload ±1 zoom, max 20 tiles */
 clearTimeout(_preloadTimer);
 _preloadTimer=setTimeout(()=>{if(!src)return;const curZ=Math.floor(S.zoom);
@@ -762,7 +765,7 @@ if(_freehandActive&&S._mapTool==="freehand"){
 if(S._activePointers.size===2&&S._pinchStartDist){const pts=[...S._activePointers.values()],dist=Math.hypot(pts[1].x-pts[0].x,pts[1].y-pts[0].y);S.zoom=Math.max(2,Math.min(19,S._pinchStartZoom+Math.log2(dist/S._pinchStartDist)));requestRender();updateCoords(pos);return}
 if(_rotUnit){canvas.style.cursor="grabbing";const sp=latlonToScreen(_rotUnit.lat,_rotUnit.lon);const dx=pos.x-sp.x,dy=-(pos.y-sp.y);let ang=Math.atan2(dx,dy)/DEG;ang=((ang%360)+360)%360;_rotUnit.rotation=Math.round(ang);netBroadcast({type:"unitEdit",unit:_rotUnit});openEditor();requestRender();return}
 if(_dragUnit){const ll=screenToLatlon(pos.x,pos.y);_dragUnit.lat=ll.lat;_dragUnit.lon=ll.lon;netBroadcast({type:"unitEdit",unit:_dragUnit});requestRender();return}
-if(_dragGV){if(_dragGV.drawMode){/* Dragging a vertex of the in-progress drawing */const ll=screenToLatlon(pos.x,pos.y);S._drawMode.points[_dragGV.idx]={lat:ll.lat,lon:ll.lon};requestRender();return}const g=S.graphics.find(x=>x.id===_dragGV.gid);if(g){if(_dragGV.labelDrag){/* Drag label offset */var dx2=pos.x-_dragGV.startPos.x,dy2=pos.y-_dragGV.startPos.y;g.labelOffset={x:_dragGV.startOffset.x+dx2,y:_dragGV.startOffset.y+dy2};requestRender();return}if(_dragGV.moveAll){/* Move all points by delta */const dx=pos.x-_dragGV.startPos.x,dy=pos.y-_dragGV.startPos.y;for(let i=0;i<g.points.length;i++){const origSp=latlonToScreen(_dragGV.startPts[i].lat,_dragGV.startPts[i].lon);const nl=screenToLatlon(origSp.x+dx,origSp.y+dy);g.points[i]={lat:nl.lat,lon:nl.lon}}}else{const ll=screenToLatlon(pos.x,pos.y);g.points[_dragGV.idx]={lat:ll.lat,lon:ll.lon}}netBroadcast({type:"graphicEdit",graphic:g});requestRender()}return}
+if(_dragGV){if(_dragGV.drawMode){/* Dragging a vertex of the in-progress drawing */const ll=screenToLatlon(pos.x,pos.y);S._drawMode.points[_dragGV.idx]={lat:ll.lat,lon:ll.lon};requestRender();return}const g=S.graphics.find(x=>x.id===_dragGV.gid);if(g){if(_dragGV.labelDrag){/* Drag label offset */var dx2=pos.x-_dragGV.startPos.x,dy2=pos.y-_dragGV.startPos.y;g.labelOffset={x:_dragGV.startOffset.x+dx2,y:_dragGV.startOffset.y+dy2};debouncedGfxSync(g.id);requestRender();return}if(_dragGV.moveAll){/* Move all points by delta */const dx=pos.x-_dragGV.startPos.x,dy=pos.y-_dragGV.startPos.y;for(let i=0;i<g.points.length;i++){const origSp=latlonToScreen(_dragGV.startPts[i].lat,_dragGV.startPts[i].lon);const nl=screenToLatlon(origSp.x+dx,origSp.y+dy);g.points[i]={lat:nl.lat,lon:nl.lon}}}else{const ll=screenToLatlon(pos.x,pos.y);g.points[_dragGV.idx]={lat:ll.lat,lon:ll.lon}}netBroadcast({type:"graphicEdit",graphic:g});requestRender()}return}
 if(S._isPanning&&S._panStart){const dx=pos.x-S._panStart.x,dy=pos.y-S._panStart.y,d=devicePixelRatio||1,c=latlonToPixel(S._panStart.lat,S._panStart.lon,S.zoom);const newC=pixelToLatlon(c.x-dx/d,c.y-dy/d,S.zoom);S.lat=newC.lat;S.lon=newC.lon;requestRender()}
 updateCoords(pos);
 /* Unit hover tooltip */
@@ -1095,7 +1098,11 @@ function renderComms(){
         h+='<span style="font-size:9px;opacity:.4">('+pkgLayers.length+')</span>';
         h+='</div>';
         if(!cpkgCollapsed){
-          h+='<div style="padding:0 4px 4px">';
+          h+='<div style="padding:2px 4px 4px">';
+          h+='<div style="display:flex;gap:3px;margin-bottom:3px">';
+          h+='<button class="btn" onclick="togglePkgShare(\''+pkg.id+'\',\'visible\')" style="flex:1;font-size:9px;padding:2px 4px;min-height:22px">\ud83d\udc41 All</button>';
+          h+='<button class="btn" onclick="togglePkgShare(\''+pkg.id+'\',\'editable\')" style="flex:1;font-size:9px;padding:2px 4px;min-height:22px">\u270e All</button>';
+          h+='</div>';
           pkgLayers.forEach(function(l){h+=renderCommLayerRow(l)});
           h+='</div>';
         }
@@ -1747,7 +1754,7 @@ function escAttr(s){return escHtml(s)}
 /* Sanitize + truncate user strings */
 function sanitizeStr(s,maxLen){s=String(s||"");if(maxLen&&s.length>maxLen)s=s.slice(0,maxLen);return s}
 /* Length limits for user input fields */
-const APP_VERSION="8.1";
+const APP_VERSION="8.4";
 function forceUpdate(){
   if("serviceWorker" in navigator){
     navigator.serviceWorker.getRegistrations().then(function(regs){
@@ -2024,38 +2031,38 @@ function renderEditor(){
     /* Restore scroll */
     var newBody=el.querySelector(".editor-body");if(newBody)newBody.scrollTop=scrollTop;
     var labelIn=document.getElementById("ed-glabel");
-    if(labelIn)labelIn.addEventListener("input",function(){g.label=sanitizeStr(this.value,INPUT_LIMITS.label);requestRender()});
+    if(labelIn)labelIn.addEventListener("input",function(){g.label=sanitizeStr(this.value,INPUT_LIMITS.label);debouncedGfxSync();requestRender()});
     var bunitAboveIn=document.getElementById("ed-bunitabove");
-    if(bunitAboveIn)bunitAboveIn.addEventListener("input",function(){g.unitAbove=sanitizeStr(this.value,INPUT_LIMITS.designation);requestRender()});
+    if(bunitAboveIn)bunitAboveIn.addEventListener("input",function(){g.unitAbove=sanitizeStr(this.value,INPUT_LIMITS.designation);debouncedGfxSync();requestRender()});
     var bunitBelowIn=document.getElementById("ed-bunitbelow");
-    if(bunitBelowIn)bunitBelowIn.addEventListener("input",function(){g.unitBelow=sanitizeStr(this.value,INPUT_LIMITS.designation);requestRender()});
+    if(bunitBelowIn)bunitBelowIn.addEventListener("input",function(){g.unitBelow=sanitizeStr(this.value,INPUT_LIMITS.designation);debouncedGfxSync();requestRender()});
     var fillIn=document.getElementById("ed-gfill");
-    if(fillIn)fillIn.addEventListener("change",function(){g.fill=this.checked;if(g.fill&&!g.fillColor)g.fillColor=g.color;requestRender();renderEditor()});
+    if(fillIn)fillIn.addEventListener("change",function(){g.fill=this.checked;if(g.fill&&!g.fillColor)g.fillColor=g.color;debouncedGfxSync();requestRender();renderEditor()});
     var fillOpIn=document.getElementById("ed-gfillop");
-    if(fillOpIn){trackFill(fillOpIn);fillOpIn.addEventListener("input",function(){g.fillOpacity=parseFloat(this.value);document.getElementById("ed-gfillop-val").textContent=Math.round(g.fillOpacity*100)+"%";trackFill(this);requestRender()})};
+    if(fillOpIn){trackFill(fillOpIn);fillOpIn.addEventListener("input",function(){g.fillOpacity=parseFloat(this.value);document.getElementById("ed-gfillop-val").textContent=Math.round(g.fillOpacity*100)+"%";trackFill(this);debouncedGfxSync();requestRender()})};
     var hatchLwIn=document.getElementById("ed-hatchlw");
-    if(hatchLwIn){trackFill(hatchLwIn);hatchLwIn.addEventListener("input",function(){g.hatchLineWidth=parseFloat(this.value);document.getElementById("ed-hatchlw-val").textContent=Math.round(g.hatchLineWidth*10)/10+"px";trackFill(this);requestRender()})};
+    if(hatchLwIn){trackFill(hatchLwIn);hatchLwIn.addEventListener("input",function(){g.hatchLineWidth=parseFloat(this.value);document.getElementById("ed-hatchlw-val").textContent=Math.round(g.hatchLineWidth*10)/10+"px";trackFill(this);debouncedGfxSync();requestRender()})};
     var hatchDenIn=document.getElementById("ed-hatchden");
-    if(hatchDenIn){trackFill(hatchDenIn);hatchDenIn.addEventListener("input",function(){g.hatchSpacing=parseInt(this.value);document.getElementById("ed-hatchden-val").textContent=g.hatchSpacing+"px";trackFill(this);requestRender()})}
+    if(hatchDenIn){trackFill(hatchDenIn);hatchDenIn.addEventListener("input",function(){g.hatchSpacing=parseInt(this.value);document.getElementById("ed-hatchden-val").textContent=g.hatchSpacing+"px";trackFill(this);debouncedGfxSync();requestRender()})}
     var hatchOpIn=document.getElementById("ed-hatchop");
-    if(hatchOpIn){trackFill(hatchOpIn);hatchOpIn.addEventListener("input",function(){g.hatchOpacity=parseFloat(this.value);document.getElementById("ed-hatchop-val").textContent=Math.round(g.hatchOpacity*100)+"%";trackFill(this);requestRender()})};
+    if(hatchOpIn){trackFill(hatchOpIn);hatchOpIn.addEventListener("input",function(){g.hatchOpacity=parseFloat(this.value);document.getElementById("ed-hatchop-val").textContent=Math.round(g.hatchOpacity*100)+"%";trackFill(this);debouncedGfxSync();requestRender()})};
     var showMIn=document.getElementById("ed-gshowmeasure");
-    if(showMIn)showMIn.addEventListener("change",function(){g.showMeasure=this.checked;requestRender()});
+    if(showMIn)showMIn.addEventListener("change",function(){g.showMeasure=this.checked;debouncedGfxSync();requestRender()});
     var lwIn=document.getElementById("ed-glw");
-    if(lwIn){trackFill(lwIn);lwIn.addEventListener("input",function(){g.lineWidth=parseFloat(this.value);document.getElementById("ed-glw-val").textContent=Math.round(g.lineWidth*10)/10+"px";trackFill(this);requestRender()})};
+    if(lwIn){trackFill(lwIn);lwIn.addEventListener("input",function(){g.lineWidth=parseFloat(this.value);document.getElementById("ed-glw-val").textContent=Math.round(g.lineWidth*10)/10+"px";trackFill(this);debouncedGfxSync();requestRender()})};
     var shadowIn=document.getElementById("ed-gshadow");
     if(shadowIn){shadowIn.addEventListener("change",function(){g.shadow=this.checked;netBroadcast({type:"graphicEdit",graphic:g});requestRender()})};
     var zBackBtn=document.getElementById("ed-zback");
     if(zBackBtn)zBackBtn.addEventListener("click",function(){var idx=S.graphics.findIndex(x=>x.id===g.id);if(idx>0){S.graphics.splice(idx,1);S.graphics.unshift(g);requestRender();renderFloatingPanel()}});
     var zFrontBtn=document.getElementById("ed-zfront");
     if(zFrontBtn)zFrontBtn.addEventListener("click",function(){var idx=S.graphics.findIndex(x=>x.id===g.id);if(idx<S.graphics.length-1){S.graphics.splice(idx,1);S.graphics.push(g);requestRender();renderFloatingPanel()}});    var fontSizeIn=document.getElementById("ed-gfontsize");
-    if(fontSizeIn){trackFill(fontSizeIn);fontSizeIn.addEventListener("input",function(){g.fontSize=parseInt(this.value);document.getElementById("ed-gfontsize-val").textContent=g.fontSize+"px";trackFill(this);requestRender()})};
+    if(fontSizeIn){trackFill(fontSizeIn);fontSizeIn.addEventListener("input",function(){g.fontSize=parseInt(this.value);document.getElementById("ed-gfontsize-val").textContent=g.fontSize+"px";trackFill(this);debouncedGfxSync();requestRender()})};
     var labelShadowIn=document.getElementById("ed-glabelshadow");
-    if(labelShadowIn)labelShadowIn.addEventListener("change",function(){g.labelShadow=this.checked;requestRender()});
+    if(labelShadowIn)labelShadowIn.addEventListener("change",function(){g.labelShadow=this.checked;debouncedGfxSync();requestRender()});
     var labelBoldIn=document.getElementById("ed-glabelbold");
-    if(labelBoldIn)labelBoldIn.addEventListener("change",function(){g.labelBold=this.checked;requestRender()});
+    if(labelBoldIn)labelBoldIn.addEventListener("change",function(){g.labelBold=this.checked;debouncedGfxSync();requestRender()});
     var arrowIn=document.getElementById("ed-garrow");
-    if(arrowIn){trackFill(arrowIn);arrowIn.addEventListener("input",function(){g.arrowSize=parseFloat(this.value);document.getElementById("ed-garrow-val").textContent=Math.round(g.arrowSize*10)/10+"x";trackFill(this);requestRender()})};
+    if(arrowIn){trackFill(arrowIn);arrowIn.addEventListener("input",function(){g.arrowSize=parseFloat(this.value);document.getElementById("ed-garrow-val").textContent=Math.round(g.arrowSize*10)/10+"x";trackFill(this);debouncedGfxSync();requestRender()})};
     return}
   /* Unit editor */
   const u=S.units.find(x=>x.id===S.selectedUnitId);if(!u){if(S.editorPinned){el.innerHTML='<div class="editor-grip" id="editor-grip"></div><div class="editor-body"><div style="opacity:.4;text-align:center;padding:20px">Select a unit to edit</div></div>';return}closeEditor();return}
@@ -2293,6 +2300,23 @@ function editRing(id,idx,field,val){const u=S.units.find(x=>x.id===id);if(!u||!u
   if(field!=="opacity"&&field!=="fillOpacity"&&field!=="label")renderEditor()}
 function removeRing(id,idx){const u=S.units.find(x=>x.id===id);if(!u)return;u.rings.splice(idx,1);editUnit(id,{rings:u.rings})}
 function deleteGraphic(id){const g=S.graphics.find(x=>x.id===id);if(!g)return;if(g._mcooEnabled){notify("Cannot delete — MCOO locked","error");return}if(g)S.undoStack.push({type:"deleteGraphic",graphic:{...g,points:g.points?g.points.map(p=>({...p})):[]}}); if(S.undoStack.length>MAX_UNDO)S.undoStack.shift();S.graphics=S.graphics.filter(x=>x.id!==id);if(S.selectedGraphicId===id){S.selectedGraphicId=null;if(!S.editorPinned)closeEditor()}netBroadcast({type:"graphicDelete",graphicId:id});updateUndoBtn();requestRender();if(S._activePanel==="addunit")renderFloatingPanel()}
+var _gfxSyncTimer=null,_gfxSyncId=null;
+function syncSelectedGraphic(){
+  if(!S.selectedGraphicId)return;
+  var g=S.graphics.find(function(x){return x.id===S.selectedGraphicId});
+  if(!g)return;
+  netBroadcast({type:"graphicEdit",graphic:g});
+}
+function debouncedGfxSync(gid){
+  /* Debounce: batch rapid changes (sliders, typing) into one broadcast */
+  _gfxSyncId=gid||S.selectedGraphicId;
+  clearTimeout(_gfxSyncTimer);
+  _gfxSyncTimer=setTimeout(function(){
+    var g=S.graphics.find(function(x){return x.id===_gfxSyncId});
+    if(g)netBroadcast({type:"graphicEdit",graphic:g});
+    _gfxSyncId=null;
+  },150);
+}
 function editGraphicProp(id,prop,val){const g=S.graphics.find(x=>x.id===id);if(!g)return;g[prop]=val;if(prop==="color")g.fillColor=val;netBroadcast({type:"graphicEdit",graphic:g});requestRender();renderEditor()}
 function editGraphicPointCoord(inp){var gid=inp.dataset.gid,idx=parseInt(inp.dataset.ptidx);var g=S.graphics.find(x=>x.id===gid);if(!g||!g.points[idx])return;var ll=parseCoordInput(inp.value);if(ll){g.points[idx].lat=ll.lat;g.points[idx].lon=ll.lon;requestRender();renderEditor()}else{IO.notify("Invalid coordinate","error");inp.value=toMGRS(g.points[idx].lat,g.points[idx].lon)}}
 function addGraphicPoint(id){var g=S.graphics.find(x=>x.id===id);if(!g||!g.points||g.points.length<2)return;/* Add point at midpoint of last segment */var last=g.points[g.points.length-1],prev=g.points[g.points.length-2];var newPt={lat:(last.lat+prev.lat)/2+0.001,lon:(last.lon+prev.lon)/2+0.001};g.points.push(newPt);requestRender();renderEditor()}
@@ -2385,7 +2409,7 @@ function toggleLayerVis(id){const l=S.layers.find(x=>x.id===id);if(l)l.visible=!
 function removeLayer(id){if(S.layers.length<=1)return;const l=S.layers.find(x=>x.id===id);const unitCount=S.units.filter(u=>u.layerId===id).length;const gfxCount=S.graphics.filter(g=>g.layerId===id).length;const total=unitCount+gfxCount;const name=l?l.name:id;if(total>0){if(!S._confirmDeleteLayer||S._confirmDeleteLayer!==id){S._confirmDeleteLayer=id;renderFloatingPanel();return}}S._confirmDeleteLayer=null;S.units=S.units.filter(u=>u.layerId!==id);S.graphics=S.graphics.filter(g=>g.layerId!==id);S.layers=S.layers.filter(l=>l.id!==id);/* Remove from packages */S.packages.forEach(p=>{p.layerIds=p.layerIds.filter(lid=>lid!==id)});S.packages=S.packages.filter(p=>p.layerIds.length>0);if(S.activeLayerId===id)S.activeLayerId=S.layers[0].id;if(S.selectedUnitId&&!S.units.find(u=>u.id===S.selectedUnitId)){S.selectedUnitId=null;closeEditor()}if(S.selectedGraphicId&&!S.graphics.find(g=>g.id===S.selectedGraphicId)){S.selectedGraphicId=null;closeEditor()}renderFloatingPanel();updateLayerIndicator();requestRender()}
 function startLayerRename(id){S._renamingLayerId=id;renderFloatingPanel();setTimeout(()=>{const inp=document.getElementById("layer-rename-"+id);if(inp){inp.focus();inp.select()}},50)}
 function commitLayerRename(id){const inp=document.getElementById("layer-rename-"+id);if(inp){const l=S.layers.find(x=>x.id===id);if(l){const v=sanitizeStr(inp.value.trim(),INPUT_LIMITS.layerName);if(v)l.name=v}}S._renamingLayerId=null;renderFloatingPanel();updateLayerIndicator()}
-function moveToLayer(kind,id,newLayerId){if(kind==="unit"){const u=S.units.find(x=>x.id===id);if(u)u.layerId=newLayerId}else{const g=S.graphics.find(x=>x.id===id);if(g)g.layerId=newLayerId}renderFloatingPanel();requestRender()}
+function moveToLayer(kind,id,newLayerId){if(kind==="unit"){const u=S.units.find(x=>x.id===id);if(u){u.layerId=newLayerId;netBroadcast({type:"unitEdit",unit:u})}}else{const g=S.graphics.find(x=>x.id===id);if(g){g.layerId=newLayerId;netBroadcast({type:"graphicEdit",graphic:g})}}renderFloatingPanel();requestRender()}
 function toggleLayerCollapse(id){const l=S.layers.find(x=>x.id===id);if(l)l.collapsed=!l.collapsed;renderFloatingPanel()}
 function togglePackageCollapse(id){const p=S.packages.find(x=>x.id===id);if(p)p.collapsed=!p.collapsed;renderFloatingPanel()}
 function togglePackageVis(id){const p=S.packages.find(x=>x.id===id);if(!p)return;const layers=p.layerIds.map(lid=>S.layers.find(l=>l.id===lid)).filter(Boolean);const allVis=layers.every(l=>l.visible);layers.forEach(l=>l.visible=!allVis);requestRender();renderFloatingPanel()}
@@ -2462,6 +2486,16 @@ function setSharedEditLayer(layerId){
   if(n.sharedEditLayer===layerId){n.sharedEditLayer=null}
   else{n.sharedEditLayer=layerId;if(!n.sharedLayers[layerId])n.sharedLayers[layerId]={visible:false,editable:false};n.sharedLayers[layerId].visible=true;n.sharedLayers[layerId].editable=true}
   renderFloatingPanel()}
+function togglePkgShare(pkgId,prop){
+  var pkg=S.packages.find(function(p){return p.id===pkgId});if(!pkg)return;
+  var n=S._net;
+  /* Check if all layers in package already have this prop */
+  var allSet=pkg.layerIds.every(function(lid){var sh=n.sharedLayers[lid];return sh&&sh[prop]});
+  pkg.layerIds.forEach(function(lid){
+    if(!n.sharedLayers[lid])n.sharedLayers[lid]={visible:false,editable:false};
+    n.sharedLayers[lid][prop]=!allSet;
+  });
+  renderFloatingPanel()}
 function broadcastSharedConfig(){
   const n=S._net;
   /* Build layer data package — only shared layers */
@@ -2511,6 +2545,38 @@ function dismissEditRequest(idx){
   renderFloatingPanel()}
 function clearEditRequest(idx){
   S._net.editRequests.splice(idx,1);renderFloatingPanel()}
+/* Heartbeat: host pings peers every 5s, removes dead ones after 15s */
+setInterval(function(){
+  var n=S._net;if(!n.isHost)return;
+  var now=Date.now();
+  /* Send ping to all peers */
+  n.conns.forEach(function(c){
+    try{c.conn.send(JSON.stringify({type:"ping",ts:now}))}catch(e){c._dead=true}
+  });
+  /* Remove peers that haven't responded in 15s */
+  var dead=n.conns.filter(function(c){return c._dead||(c._lastPong&&now-c._lastPong>15000)});
+  if(dead.length){
+    dead.forEach(function(c){
+      var pid=c.peerId||c.conn.peer;
+      try{c.conn.close()}catch(e){}
+      delete n.peerNames[pid];delete n.peerPermissions[pid];
+    });
+    n.conns=n.conns.filter(function(c){return!c._dead&&!(c._lastPong&&now-c._lastPong>15000)});
+    n.status=n.conns.length+" peer(s)";
+    broadcastRoster();renderFloatingPanel();
+  }
+},5000);
+/* Peer: send pong on ping, detect host gone */
+setInterval(function(){
+  var n=S._net;
+  if(n.mode==="connected"&&n.hostConn){
+    if(n._lastHostPing&&Date.now()-n._lastHostPing>20000){
+      /* Host gone — disconnect */
+      n.mode="offline";n.status="Host lost";n.hostConn=null;
+      updateNetDot("");notify("Lost connection to host","error");renderFloatingPanel();
+    }
+  }
+},5000);
 /* Auto-refresh stale requests every 5s when hosting */
 setInterval(()=>{if(S._net.isHost&&S._net.editRequests.some(r=>r.status==="pending")&&S._activePanel==="comms")renderFloatingPanel()},5000);
 
@@ -2681,7 +2747,7 @@ function shouldBroadcastEdit(msg){
   else if(msg.graphic)layerId=msg.graphic.layerId;
   else if(msg.unitId){const u=S.units.find(x=>x.id===msg.unitId);if(u)layerId=u.layerId}
   else if(msg.graphicId){const g=S.graphics.find(x=>x.id===msg.graphicId);if(g)layerId=g.layerId}
-  if(layerId){const sh=n.sharedLayers[layerId];if(!sh||!sh.editable)return false}
+  if(layerId&&n.editScope==="room"){const sh=n.sharedLayers[layerId];if(!sh||!sh.editable)return false}
   return true}
 function netBroadcast(msg){const n=S._net;if(n.mode==="offline")return;if(!shouldBroadcastEdit(msg))return;const str=JSON.stringify(msg);if(n.isHost){n.conns.forEach(c=>{try{c.conn.send(str)}catch(e){}})}else if(n.hostConn){try{n.hostConn.send(str)}catch(e){}}}
 function netCreateRoom(){
@@ -2689,9 +2755,10 @@ function netCreateRoom(){
   n.peer=new Peer("staffmaps-"+n.roomCode,{debug:0});
   n.peer.on("open",()=>{n.isHost=true;n.mode="hosting";n.status="Hosting";updateNetDot("connected");renderFloatingPanel()});
   n.peer.on("connection",conn=>{
-    conn.on("open",()=>{n.conns.push({conn,peerId:conn.peer,joinOrder:n.nextJoinOrder++});var fMsg={type:"fullState",units:S.units,graphics:S.graphics,layers:S.layers,packages:S.packages,activeLayerId:S.activeLayerId,editMode:n.editMode,sharedLayers:n.sharedLayers,sharedEditLayer:n.sharedEditLayer};conn.send(JSON.stringify(fMsg));/* Send wargame state if active */if(n.wargame.active){setTimeout(function(){var pRole="observer";var wgMsg={type:"wargameState",active:true,phase:n.wargame.phase,turnNumber:n.wargame.turnNumber,myRole:pRole,layerRoles:n.wargame.layerRoles,orders:[],roles:n.wargame.roles};try{conn.send(JSON.stringify(wgMsg))}catch(e){}},100)}n.status=n.conns.length+" peer(s)";renderFloatingPanel()});
+    conn.on("open",()=>{n.conns.push({conn,peerId:conn.peer,joinOrder:n.nextJoinOrder++,_lastPong:Date.now()});var fMsg={type:"fullState",units:S.units,graphics:S.graphics,layers:S.layers,packages:S.packages,activeLayerId:S.activeLayerId,editMode:n.editMode,sharedLayers:n.sharedLayers,sharedEditLayer:n.sharedEditLayer};conn.send(JSON.stringify(fMsg));/* Send wargame state if active */if(n.wargame.active){setTimeout(function(){var pRole="observer";var wgMsg={type:"wargameState",active:true,phase:n.wargame.phase,turnNumber:n.wargame.turnNumber,myRole:pRole,layerRoles:n.wargame.layerRoles,orders:[],roles:n.wargame.roles};try{conn.send(JSON.stringify(wgMsg))}catch(e){}},100)}n.status=n.conns.length+" peer(s)";renderFloatingPanel()});
     conn.on("data",data=>{try{var msg=JSON.parse(data);sanitizeNetMsg(msg);handleNetMsg(msg,conn.peer)}catch(e){}});
-    conn.on("close",()=>{const pid=conn.peer;n.conns=n.conns.filter(c=>c.conn!==conn);delete n.peerNames[pid];delete n.peerPermissions[pid];n.status=n.conns.length+" peer(s)";broadcastRoster();renderFloatingPanel()})});
+    conn.on("close",()=>{const pid=conn.peer;n.conns=n.conns.filter(c=>c.conn!==conn);delete n.peerNames[pid];delete n.peerPermissions[pid];n.status=n.conns.length+" peer(s)";broadcastRoster();renderFloatingPanel()});
+    conn.on("error",()=>{const pid=conn.peer;n.conns=n.conns.filter(c=>c.conn!==conn);delete n.peerNames[pid];delete n.peerPermissions[pid];n.status=n.conns.length+" peer(s)";broadcastRoster();renderFloatingPanel()})});
   n.peer.on("error",e=>{n.status="Error: "+e.type;updateNetDot("error");renderFloatingPanel()})}
 
 function netJoinRoom(){
@@ -2699,7 +2766,7 @@ function netJoinRoom(){
   n.roomCode=code.toUpperCase();n.peer=new Peer(undefined,{debug:0});
   n.peer.on("open",()=>{
     const conn=n.peer.connect("staffmaps-"+n.roomCode);n.hostConn=conn;
-    conn.on("open",()=>{n.mode="connected";n.status="Connected";updateNetDot("connected");conn.send(JSON.stringify({type:"hello",name:n.peerName}));renderFloatingPanel()});
+    conn.on("open",()=>{n.mode="connected";n.status="Connected";updateNetDot("connected");S._net._lastHostPing=Date.now();conn.send(JSON.stringify({type:"hello",name:n.peerName}));renderFloatingPanel()});
     conn.on("data",data=>{try{var msg=JSON.parse(data);sanitizeNetMsg(msg);handleNetMsg(msg,null)}catch(e){}});
     conn.on("close",()=>{n.mode="offline";n.status="Disconnected";n.hostConn=null;updateNetDot("");renderFloatingPanel()})});
   n.peer.on("error",e=>{n.status="Error: "+e.type;updateNetDot("error");renderFloatingPanel()})}
@@ -2768,6 +2835,14 @@ function handleNetMsg(msg,fromPeer){
     S._net.editRequestStatus=msg.canEdit?"approved":null;
     notify(msg.canEdit?"Edit access granted":"Edit access revoked");
     renderFloatingPanel()}
+  else if(msg.type==="ping"){
+    /* Peer receives ping from host — respond with pong */
+    S._net._lastHostPing=Date.now();
+    if(S._net.hostConn)try{S._net.hostConn.send(JSON.stringify({type:"pong"}))}catch(e){}}
+  else if(msg.type==="pong"){
+    /* Host receives pong from peer — update last seen */
+    if(fromPeer){var _pc=S._net.conns.find(function(c){return c.peerId===fromPeer||c.conn.peer===fromPeer});
+    if(_pc){_pc._lastPong=Date.now();_pc._dead=false}}}
   else if(msg.type==="hello"){S._net.peerNames[fromPeer]=sanitizeStr(msg.name||"Peer",INPUT_LIMITS.callsign);
     /* Assign default permission on join */
     if(S._net.isHost){
@@ -2778,7 +2853,7 @@ function handleNetMsg(msg,fromPeer){
     }
     renderFloatingPanel()}
   else if(msg.type==="unitAdd"){if(msg.unit&&sanitizeUnit(msg.unit)&&!S.units.find(u=>u.id===msg.unit.id))S.units.push(msg.unit);requestRender()}
-  else if(msg.type==="unitEdit"){if(msg.unit&&sanitizeUnit(msg.unit)){const idx=S.units.findIndex(u=>u.id===msg.unit.id);if(idx>=0)S.units[idx]=msg.unit}requestRender()}
+  else if(msg.type==="unitEdit"){if(msg.unit&&sanitizeUnit(msg.unit)){const idx=S.units.findIndex(u=>u.id===msg.unit.id);if(idx>=0)Object.assign(S.units[idx],msg.unit);else S.units.push(msg.unit)}requestRender()}
   else if(msg.type==="unitDelete"){S.units=S.units.filter(u=>u.id!==msg.unitId);requestRender()}
   else if(msg.type==="graphicAdd"){if(msg.graphic&&sanitizeGraphic(msg.graphic)&&!S.graphics.find(g=>g.id===msg.graphic.id))S.graphics.push(msg.graphic);requestRender()}
   else if(msg.type==="graphicEdit"){if(msg.graphic&&sanitizeGraphic(msg.graphic)){const idx=S.graphics.findIndex(g=>g.id===msg.graphic.id);if(idx>=0)S.graphics[idx]=msg.graphic}requestRender()}
