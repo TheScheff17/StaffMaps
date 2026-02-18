@@ -22,7 +22,7 @@
 [data-theme="light"] .btn.danger{color:#cc2222}
 [data-theme="light"] .float-panel{background:rgba(245,245,245,0.97);box-shadow:0 4px 20px rgba(0,0,0,.15)}
 [data-theme="light"] .editor-overlay{background:rgba(245,245,245,0.97);box-shadow:0 4px 24px rgba(0,0,0,.15)}
-[data-theme="light"] .topbar{background:rgba(245,245,245,0.97)}
+[data-theme="light"] #app{background:#e8e8e8}[data-theme="light"] .topbar{background:rgba(245,245,245,0.97)}
 [data-theme="light"] .file-menu{background:rgba(245,245,245,0.98)}
 [data-theme="light"] .mode-bar{background:rgba(245,245,245,0.97)}
 [data-theme="light"] .toast{background:#333;color:#fff}
@@ -33,8 +33,8 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;height:100%;overflow:hidden;overscroll-behavior:none;font-family:var(--font);background:var(--bg);color:var(--fg);touch-action:none;-webkit-text-size-adjust:100%}
 @supports (-webkit-touch-callout: none){input,select,textarea{font-size:16px!important}}
-#app{width:100%;height:100%;display:flex;flex-direction:column}
-.topbar{box-sizing:content-box;height:28px;padding:0 4px;padding-top:var(--safe-top);padding-left:calc(4px + var(--safe-left));padding-right:calc(4px + var(--safe-right));display:flex;align-items:center;justify-content:space-between;background:var(--panel-bg);border-bottom:1px solid var(--border);z-index:100;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);flex-shrink:0;position:relative;zoom:var(--ui-scale)}
+#app{width:100%;height:100%;display:flex;flex-direction:column;background:#1a1a2e}
+.topbar{box-sizing:border-box;padding:0 4px;padding-top:calc(4px + var(--safe-top));padding-bottom:4px;padding-left:calc(4px + var(--safe-left));padding-right:calc(4px + var(--safe-right));display:flex;align-items:center;justify-content:space-between;background:var(--panel-bg);border-bottom:1px solid var(--border);z-index:100;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);flex-shrink:0;position:relative;zoom:var(--ui-scale)}
 .topbar-left{display:flex;align-items:center;gap:6px}.topbar-dot{width:8px;height:8px;border-radius:50%;background:#555;flex-shrink:0}.topbar-dot.connected{background:var(--success);box-shadow:0 0 4px var(--success)}.topbar-dot.connecting{background:var(--warning)}.topbar-dot.error{background:var(--danger)}
 .topbar-title{font-size:13px;font-weight:700;letter-spacing:2px}.topbar-right{display:flex;align-items:center;gap:6px}.topbar-coords{font-size:10px;opacity:0.7;white-space:nowrap}
 .btn{background:var(--btn-bg);color:var(--fg);border:1px solid var(--border);border-radius:4px;font-family:var(--font);font-size:11px;cursor:pointer;padding:4px 8px;touch-action:manipulation;transition:background .15s}.btn:hover{background:var(--btn-hover)}.btn:active{background:rgba(255,255,255,.25)}.btn.danger{border-color:var(--danger);color:var(--danger)}.btn.primary{border-color:var(--accent);color:var(--accent)}
@@ -46,7 +46,7 @@ html,body{width:100%;height:100%;overflow:hidden;overscroll-behavior:none;font-f
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
 .fp-header{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid var(--border);flex-shrink:0}.fp-title{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
 .fp-body{overflow-y:auto;padding:8px 10px;flex:1;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent}.fp-body::-webkit-scrollbar{width:6px}.fp-body::-webkit-scrollbar-track{background:transparent}.fp-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:3px}.fp-body::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.35)}
-[data-theme="light"] .fp-body{scrollbar-color:rgba(0,0,0,.2) transparent}[data-theme="light"] .fp-body::-webkit-scrollbar-thumb{background:rgba(0,0,0,.2)}[data-theme="light"] .fp-body::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.35)}.fp-body label{display:block;font-size:10px;opacity:.6;margin-bottom:2px;text-transform:uppercase;letter-spacing:.5px}.fp-body label.switch,.fp-body label.switch-sm{display:inline-block;opacity:1;font-size:inherit;margin-bottom:0;text-transform:none;letter-spacing:normal}.fp-body select,.fp-body input[type="text"],.fp-body input[type="number"],.fp-body input[type="password"]{width:100%;background:var(--btn-bg);color:var(--fg);border:1px solid var(--border);border-radius:4px;padding:6px 8px;font-family:var(--font);font-size:11px;margin-bottom:8px;-webkit-appearance:none;appearance:none}.fp-body select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:24px}.fp-body select option{background:#222;color:#e0e0e0}.fp-body input[type="range"]{width:100%;margin-bottom:8px}.fp-body .section{margin-bottom:12px}.fp-body .section-title{font-size:11px;font-weight:700;margin-bottom:6px;border-bottom:1px solid var(--border);padding-bottom:4px}.fp-body .row{display:flex;gap:4px;margin-bottom:4px}.fp-body .row .btn{flex:1}.fp-body .toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}.fp-body .toggle-row span{font-size:11px}
+[data-theme="light"] .fp-body{scrollbar-color:rgba(0,0,0,.2) transparent}[data-theme="light"] .fp-body::-webkit-scrollbar-thumb{background:rgba(0,0,0,.2)}[data-theme="light"] .fp-body::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.35)}.fp-body label{display:block;font-size:10px;opacity:.6;margin-bottom:2px;text-transform:uppercase;letter-spacing:.5px}.fp-body label.switch,.fp-body label.switch-sm{display:inline-block;opacity:1;font-size:inherit;margin-bottom:0;text-transform:none;letter-spacing:normal}.fp-body select,.fp-body input[type="text"],.fp-body input[type="number"],.fp-body input[type="password"]{width:100%;background:var(--btn-bg);color:var(--fg);border:1px solid var(--border);border-radius:4px;padding:6px 8px;font-family:var(--font);font-size:11px;margin-bottom:8px;-webkit-appearance:none;appearance:none}.fp-body input,.editor-body input{autocomplete:off}.fp-body select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:24px}.fp-body select option{background:#222;color:#e0e0e0}.fp-body input[type="range"]{width:100%;margin-bottom:8px}.fp-body .section{margin-bottom:12px}.fp-body .section-title{font-size:11px;font-weight:700;margin-bottom:6px;border-bottom:1px solid var(--border);padding-bottom:4px}.fp-body .row{display:flex;gap:4px;margin-bottom:4px}.fp-body .row .btn{flex:1}.fp-body .toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}.fp-body .toggle-row span{font-size:11px}
 .editor-overlay{position:absolute;bottom:calc(4px + var(--safe-bottom));right:calc(4px + var(--safe-right));width:min(33vw,360px);min-width:280px;max-height:calc(var(--app-h,100vh) - 100px - var(--safe-top) - var(--safe-bottom));background:var(--panel-bg);border:1px solid var(--border);border-radius:12px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:60;display:none;flex-direction:column;animation:slideRight .2s ease-out;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.4);zoom:var(--ui-scale);color-scheme:dark}.editor-overlay.open{display:flex}@keyframes slideRight{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
 [data-theme="light"] .editor-overlay{color-scheme:light}
 .editor-grip{width:100%;height:20px;display:flex;align-items:center;justify-content:center;cursor:ns-resize;flex-shrink:0;touch-action:none}.editor-grip::after{content:'';width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.2)}
@@ -100,10 +100,10 @@ input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:20
 .zoom-ctrl .btn{width:36px;height:36px;min-height:36px;font-size:15px;padding:0}
 .zoom-ctrl .stack-btn{width:36px;height:36px}
 .editor-overlay{left:calc(4px + var(--safe-left));right:auto;bottom:calc(44px + var(--safe-bottom));top:auto;width:min(45vw,340px);min-width:220px;max-height:calc(100% - 50px - var(--safe-top) - var(--safe-bottom));border-radius:8px;animation:slideRight .2s ease-out}
-.topbar{height:28px;box-sizing:content-box;font-size:11px}.topbar .btn{min-height:28px;padding:4px 10px;font-size:11px}
+.topbar{font-size:11px;padding-top:calc(2px + var(--safe-top));padding-bottom:2px}.topbar .btn{min-height:26px;padding:3px 8px;font-size:11px}
 .layer-indicator{bottom:calc(44px + var(--safe-bottom));left:calc(4px + var(--safe-left))}
 .mode-bar{bottom:calc(44px + var(--safe-bottom))}
-.file-menu{left:0;right:auto;max-width:min(260px,50vw);margin-top:2px}
+.file-menu{left:auto;right:auto;max-width:min(240px,45vw);margin-top:2px}.topbar-left{position:relative}
 }
 
 </style>
@@ -1044,10 +1044,10 @@ function renderSettings(){
 
 function renderComms(){
   const n=S._net;let h='<div class="section"><div class="section-title">Connection</div>';
-  h+='<label>Callsign</label><input type="text" id="net-name" value="'+escAttr(n.peerName||"")+'" placeholder="Your callsign" maxlength="20">';
+  h+='<label>Callsign</label><input type="text" id="net-name" value="'+escAttr(n.peerName||"")+'" placeholder="Your callsign" maxlength="20" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">';
   if(n.mode==="offline"){
     h+='<div class="row"><button class="btn primary" onclick="netCreateRoom()">Create Room</button></div>';
-    h+='<label>Join Room</label><div class="row" style="align-items:stretch"><input type="text" id="net-code" placeholder="Room code" maxlength="6" style="flex:2;margin-bottom:0"><button class="btn" onclick="netJoinRoom()" style="min-height:0;align-self:stretch">Join</button></div>';
+    h+='<label>Join Room</label><div class="row" style="align-items:stretch"><input type="text" id="net-code" placeholder="Room code" maxlength="6" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="flex:2;margin-bottom:0"><button class="btn" onclick="netJoinRoom()" style="min-height:0;align-self:stretch">Join</button></div>';
   }else{
     h+='<div style="font-size:11px;margin-bottom:6px">Room: <strong>'+(n.roomCode||"---")+'</strong> <button class="btn" onclick="navigator.clipboard.writeText(\''+(n.roomCode||"")+'\')" style="padding:1px 4px;font-size:9px">Copy</button></div>';
     h+='<div style="font-size:11px;margin-bottom:6px">Mode: '+(n.isHost?"HOST":"PEER")+'</div>';
@@ -1097,7 +1097,19 @@ function renderComms(){
         h+='</div>';
       }
       /* Shared Layers section for host */
-      h+='<div class="section-title" style="margin-top:8px">Shared Layers</div>';
+      h+='<div class="section-title" style="margin-top:8px">Shared Layers <span style="cursor:pointer;font-size:12px;opacity:.5;margin-left:4px" onclick="S._showShareInfo=!S._showShareInfo;renderFloatingPanel()" title="Sharing Guide">\u2139\ufe0f</span></div>';
+      if(S._showShareInfo){
+        h+='<div style="font-size:10px;opacity:.7;margin-bottom:8px;padding:6px;border:1px solid var(--border);border-radius:4px;background:rgba(255,255,255,.03);line-height:1.4">';
+        h+='<strong>\ud83d\udc41 Visible</strong> \u2014 Peers can see this layer<br>';
+        h+='<strong>\u270e Editable</strong> \u2014 Peers with edit permission can modify units/graphics on this layer<br>';
+        h+='<strong>\u2605 Primary</strong> \u2014 Prompts peers to switch to this layer for editing<br>';
+        h+='<div style="margin-top:4px;padding-top:4px;border-top:1px solid var(--border)">';
+        h+='<strong>Two requirements for peer editing:</strong><br>';
+        h+='1. Peer must have <span style="color:#44cc44">EDIT</span> permission (toggle in Room Members below)<br>';
+        h+='2. Layer must be marked \u270e editable (toggle per-layer above)<br>';
+        h+='Both are needed. This lets you give a peer edit access but restrict which layers they can modify.</div>';
+        h+='</div>';
+      }
       h+='<div style="font-size:10px;opacity:.5;margin-bottom:6px">Toggle layers visible/editable for peers</div>';
       function renderCommLayerRow(l){
         var rh='';const sh=n.sharedLayers[l.id]||{};
@@ -1409,7 +1421,7 @@ function renderChat(){
   h+='</div>';
   /* Input */
   var placeholder=tgt==="room"?"Message room...":"DM "+((n.isHost?(n.peerNames[tgt]||"peer"):tgt==="host"?"host":"peer"))+"...";
-  h+='<div class="row" style="align-items:stretch"><input type="text" id="chat-input" placeholder="'+placeholder+'" style="flex:1;margin-bottom:0" maxlength="500"><button class="btn primary" onclick="sendChat()" style="min-height:0;align-self:stretch">Send</button></div>';
+  h+='<div class="row" style="align-items:stretch"><input type="text" id="chat-input" placeholder="'+placeholder+'" style="flex:1;margin-bottom:0" maxlength="500" autocomplete="off" autocorrect="off" spellcheck="false"><button class="btn primary" onclick="sendChat()" style="min-height:0;align-self:stretch">Send</button></div>';
   return h}
 
 function renderLayers(){
@@ -1561,7 +1573,7 @@ function renderAddUnitPanel(){
 
 function renderMapToolsPanel(){
   let h='<div class="section"><div class="section-title">Coordinate Search</div>';
-  h+='<div style="display:flex;gap:4px;align-items:stretch"><input type="text" id="coord-search-input" placeholder="MGRS or lat,lon" style="flex:1;margin:0"><button class="btn primary" onclick="coordSearch()" style="margin:0;white-space:nowrap">Go</button></div>';
+  h+='<div style="display:flex;gap:4px;align-items:stretch"><input type="text" id="coord-search-input" placeholder="MGRS or lat,lon" autocomplete="off" autocorrect="off" spellcheck="false" style="flex:1;margin:0"><button class="btn primary" onclick="coordSearch()" style="margin:0;white-space:nowrap">Go</button></div>';
   h+='<div style="font-size:9px;opacity:.5;margin-top:3px">e.g. 18SUJ2340067 or 38.8977,-77.0365</div></div>';
   h+='<div class="section"><div class="section-title">Tools</div><div class="row" style="flex-wrap:wrap;gap:4px">';
   h+=`<button class="btn${S._mapTool==='pin'?' primary':''}" onclick="activateMapTool('pin');togglePanel(null)" style="flex:1;min-width:70px">📍 Pin [P]</button>`;
@@ -1780,7 +1792,7 @@ function escAttr(s){return escHtml(s)}
 /* Sanitize + truncate user strings */
 function sanitizeStr(s,maxLen){s=String(s||"");if(maxLen&&s.length>maxLen)s=s.slice(0,maxLen);return s}
 /* Length limits for user input fields */
-const APP_VERSION="9.7";
+const APP_VERSION="10.0";
 function toggleFullscreen(){
   var d=document;
   if(d.fullscreenElement||d.webkitFullscreenElement){
@@ -2316,7 +2328,7 @@ function bindEditorEvents(u){
 function editUnit(id,changes){
   const u=S.units.find(x=>x.id===id);if(!u)return;
   S.undoStack.push({type:"edit",unitId:id,prev:{...u}});if(S.undoStack.length>MAX_UNDO)S.undoStack.shift();
-  Object.assign(u,changes);netBroadcast({type:"unitEdit",unit:u});updateUndoBtn();renderEditor();requestRender()}
+  Object.assign(u,changes);netBroadcast({type:"unitEdit",unit:stripHeavyProps(u)});updateUndoBtn();renderEditor();requestRender()}
 function deleteUnit(id){
   const u=S.units.find(x=>x.id===id);if(!u)return;
   S.undoStack.push({type:"delete",unit:{...u}});if(S.undoStack.length>MAX_UNDO)S.undoStack.shift();
@@ -2342,8 +2354,14 @@ function debouncedUnitSync(u){
   var _uid=u.id;
   _unitSyncTimer=setTimeout(function(){
     var unit=S.units.find(function(x){return x.id===_uid});
-    if(unit)netBroadcast({type:"unitEdit",unit:unit});
+    if(unit)netBroadcast({type:"unitEdit",unit:stripHeavyProps(unit)});
   },80);
+}
+function stripHeavyProps(u){
+  /* Strip large data (customIcon) from incremental edits to avoid WebRTC message size limits */
+  if(!u.customIcon)return u;
+  var lite={};for(var k in u)if(k!=="customIcon")lite[k]=u[k];
+  return lite;
 }
 var _gfxSyncTimer=null,_gfxSyncId=null;
 function syncSelectedGraphic(){
@@ -2881,11 +2899,13 @@ function handleNetMsg(msg,fromPeer){
   else if(msg.type==="editRequestResult"){
     /* Peer receives response from host */
     S._net.editRequestStatus=msg.approved?"approved":"denied";
+    if(msg.approved)S._net.editScope="room";
     notify(msg.approved?"Edit access granted":"Edit access denied",msg.approved?undefined:"error");
     renderFloatingPanel()}
   else if(msg.type==="permissionUpdate"){
     /* Peer receives permission change from host */
     S._net.editRequestStatus=msg.canEdit?"approved":null;
+    if(msg.canEdit)S._net.editScope="room";
     notify(msg.canEdit?"Edit access granted":"Edit access revoked");
     renderFloatingPanel()}
   else if(msg.type==="ping"){
