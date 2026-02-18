@@ -3117,6 +3117,7 @@ function shouldBroadcastEdit(msg){
   else if(msg.graphicId){const g=S.graphics.find(x=>x.id===msg.graphicId);if(g)layerId=g.layerId}
   if(layerId){const sh=n.sharedLayers[layerId];if(!sh||!sh.editable)return false}
   return true}
+function _u8ToB64(u8){var CHUNK=0x8000;var parts=[];for(var i=0;i<u8.length;i+=CHUNK){parts.push(String.fromCharCode.apply(null,u8.subarray(i,Math.min(i+CHUNK,u8.length))))}return btoa(parts.join(""))}
 function _peerOpts(){var s=S._signalServer;if(!s||!s.host)return{debug:0};var opts={debug:0,host:s.host,port:s.port||9000,path:s.path||"/peerjs",secure:!!s.secure};if(s.turnHost){opts.config={iceServers:[{urls:"stun:stun.l.google.com:19302"},{urls:"turn:"+s.turnHost+":"+(s.turnPort||3478),username:s.turnUser||"scheffmap",credential:s.turnPass||"scheffmap"}]}}return opts}
 
 function netBroadcast(msg){const n=S._net;if(n.mode==="offline")return;if(!shouldBroadcastEdit(msg))return;const str=JSON.stringify(msg);if(n.isHost){n.conns.forEach(c=>{try{c.conn.send(str)}catch(e){}})}else if(n.hostConn){try{n.hostConn.send(str)}catch(e){}}}
@@ -3945,7 +3946,6 @@ const IO={
     const data={version:"3.0",app:"StaffMaps",timestamp:new Date().toISOString(),map:{lat:S.lat,lon:S.lon,zoom:S.zoom,tileSource:S.tileSource},units:exportUnits,graphics:exportGraphics,layers:exportLayers,packages:exportPkgs};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
     dlBlob(blob,"scheffmap-export-"+new Date().toISOString().slice(0,10)+".tacmap");IO.notify("Exported "+(exportUnits.length+exportGraphics.length)+" features as .tacmap")},
-  function _u8ToB64(u8){var CHUNK=0x8000;var parts=[];for(var i=0;i<u8.length;i+=CHUNK){parts.push(String.fromCharCode.apply(null,u8.subarray(i,Math.min(i+CHUNK,u8.length))))}return btoa(parts.join(""))}
   importKMZ(buf){
     try{
       const dv=new DataView(buf);let off=0;let kmlText=null;const embeddedFiles={};const pendingDeflates=[];
