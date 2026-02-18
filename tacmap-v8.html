@@ -304,7 +304,7 @@ function drawLLGrid(){const d=devicePixelRatio||1,W=canvas.width,H=canvas.height
 
 // === part_04_units.js ===
 
-function drawUnitIcon(c2,u,cx,cy,sz){const sc=sz/SVG_W;c2.save();c2.translate(cx,cy);if(u.rotation)c2.rotate(u.rotation*DEG);c2.translate(-sz/2,-sz/2);c2.scale(sc,sc);const a=AFFILIATIONS[u.affiliation||"friendly"],col=a.color,sw=3,hw=FRAME_W/2,hh=FRAME_H/2;/* UAV/drone uses house-shaped (pentagon) frame per MIL-STD-2525 equipment */const _isUAV=u.isEquipment&&u.type==="uav";const _cr=Math.max(hw,hh)+U*.1;const B=_isUAV?(CY+hh):a.shape==="circle"?CY+_cr:a.shape==="diamond"?CY+(hh+U*.6):CY+hh;if(u.isHQ){c2.beginPath();c2.moveTo(CX,B);c2.lineTo(CX,SVG_H-U*.5);c2.strokeStyle="#000";c2.lineWidth=sw;c2.stroke()}/* Frame */c2.fillStyle=a.fill;c2.strokeStyle=col;c2.lineWidth=sw;if(_isUAV){/* House/pentagon frame for drones */const hx=hw*.85,hy=hh+U*.2;const peakY=CY-hy-U*1.0;c2.beginPath();c2.moveTo(CX,peakY);c2.lineTo(CX+hx,CY-hy*.3);c2.lineTo(CX+hx,CY+hy);c2.lineTo(CX-hx,CY+hy);c2.lineTo(CX-hx,CY-hy*.3);c2.closePath();c2.fill();c2.stroke()}else switch(a.shape){case"circle":{const cr=_cr;c2.beginPath();c2.arc(CX,CY,cr,0,Math.PI*2);c2.fill();c2.stroke();break}case"rect":c2.beginPath();c2.rect(CX-hw,CY-hh,FRAME_W,FRAME_H);c2.fill();c2.stroke();break;case"diamond":{const dx=hw+U*.6,dy=hh+U*.6;c2.beginPath();c2.moveTo(CX,CY-dy);c2.lineTo(CX+dx,CY);c2.lineTo(CX,CY+dy);c2.lineTo(CX-dx,CY);c2.closePath();c2.fill();c2.stroke();break}case"square":{const sq=Math.max(hw,hh)+U*.2;c2.beginPath();c2.rect(CX-sq,CY-sq,sq*2,sq*2);c2.fill();c2.stroke();break}case"quatrefoil":{const r=hh*.55;c2.beginPath();c2.moveTo(CX,CY-hh-U*.3);c2.bezierCurveTo(CX+r,CY-hh-U*.3,CX+hw+U*.3,CY-r,CX+hw+U*.3,CY);c2.bezierCurveTo(CX+hw+U*.3,CY+r,CX+r,CY+hh+U*.3,CX,CY+hh+U*.3);c2.bezierCurveTo(CX-r,CY+hh+U*.3,CX-hw-U*.3,CY+r,CX-hw-U*.3,CY);c2.bezierCurveTo(CX-hw-U*.3,CY-r,CX-r,CY-hh-U*.3,CX,CY-hh-U*.3);c2.closePath();c2.fill();c2.stroke();break}}/* Interior bounds */var ihw=hw,ihh=hh;if(_isUAV){ihw=hw*.65;ihh=hh*.65}else switch(a.shape){case"circle":{ihw=_cr*.68;ihh=_cr*.68;break}case"diamond":ihw=hw*.58;ihh=hh*.58;break;case"square":{const sq=Math.max(hw,hh)+U*.2;ihw=sq*.7;ihh=sq*.7;break}case"quatrefoil":ihw=hw*.6;ihh=hh*.6;break}/* Icon interior */c2.strokeStyle="#000";c2.fillStyle="#000";c2.lineWidth=2.5;drawTS(c2,u.type,CX,CY,ihw,ihh);if(u.echelon)drawEch(c2,u.echelon,u.affiliation,u.type,u.isEquipment);if(u.modifiers&&u.modifiers.length)drawMods(c2,u.modifiers);/* Text labels outside frame */c2.fillStyle="#000";c2.font=`bold ${U*2.0}px serif`;const textX=_isUAV?(hw*.85):a.shape==="circle"?_cr*0.72:hw;if(u.designation){c2.textAlign="right";c2.textBaseline="alphabetic";c2.fillText(u.designation,CX-textX-U*.3,B)}if(u.parentUnit){c2.textAlign="left";c2.textBaseline="alphabetic";c2.fillText(u.parentUnit,CX+textX+U*.3,B)}c2.restore()}
+function drawUnitIcon(c2,u,cx,cy,sz){const sc=sz/SVG_W;c2.save();c2.translate(cx,cy);if(u.rotation)c2.rotate(u.rotation*DEG);c2.translate(-sz/2,-sz/2);c2.scale(sc,sc);const a=AFFILIATIONS[u.affiliation||"friendly"],col=a.color,sw=3,hw=FRAME_W/2,hh=FRAME_H/2;/* UAV/drone uses house-shaped (pentagon) frame per MIL-STD-2525 equipment */const _isUAV=u.isEquipment&&u.type==="uav";const _cr=Math.max(hw,hh)+U*.1;const B=_isUAV?(CY+hh):a.shape==="circle"?CY+_cr:a.shape==="diamond"?CY+(hh+U*.6):CY+hh;if(u.isHQ){c2.beginPath();c2.moveTo(CX,B);c2.lineTo(CX,SVG_H-U*.5);c2.strokeStyle="#000";c2.lineWidth=sw;c2.stroke()}/* Frame */c2.fillStyle=a.fill;c2.strokeStyle=col;c2.lineWidth=sw;if(_isUAV){/* House/pentagon frame for drones */const hx=hw*.85,hy=hh+U*.2;const peakY=CY-hy-U*1.0;c2.beginPath();c2.moveTo(CX,peakY);c2.lineTo(CX+hx,CY-hy*.3);c2.lineTo(CX+hx,CY+hy);c2.lineTo(CX-hx,CY+hy);c2.lineTo(CX-hx,CY-hy*.3);c2.closePath();c2.fill();c2.stroke()}else switch(a.shape){case"circle":{const cr=_cr;c2.beginPath();c2.arc(CX,CY,cr,0,Math.PI*2);c2.fill();c2.stroke();break}case"rect":c2.beginPath();c2.rect(CX-hw,CY-hh,FRAME_W,FRAME_H);c2.fill();c2.stroke();break;case"diamond":{const dx=hw+U*.6,dy=hh+U*.6;c2.beginPath();c2.moveTo(CX,CY-dy);c2.lineTo(CX+dx,CY);c2.lineTo(CX,CY+dy);c2.lineTo(CX-dx,CY);c2.closePath();c2.fill();c2.stroke();break}case"square":{const sq=Math.max(hw,hh)+U*.2;c2.beginPath();c2.rect(CX-sq,CY-sq,sq*2,sq*2);c2.fill();c2.stroke();break}case"quatrefoil":{const r=hh*.55;c2.beginPath();c2.moveTo(CX,CY-hh-U*.3);c2.bezierCurveTo(CX+r,CY-hh-U*.3,CX+hw+U*.3,CY-r,CX+hw+U*.3,CY);c2.bezierCurveTo(CX+hw+U*.3,CY+r,CX+r,CY+hh+U*.3,CX,CY+hh+U*.3);c2.bezierCurveTo(CX-r,CY+hh+U*.3,CX-hw-U*.3,CY+r,CX-hw-U*.3,CY);c2.bezierCurveTo(CX-hw-U*.3,CY-r,CX-r,CY-hh-U*.3,CX,CY-hh-U*.3);c2.closePath();c2.fill();c2.stroke();break}}/* Interior bounds */var ihw=hw,ihh=hh;if(_isUAV){ihw=hw*.65;ihh=hh*.65}else switch(a.shape){case"circle":{ihw=_cr*.68;ihh=_cr*.68;break}case"diamond":ihw=hw*.58;ihh=hh*.58;break;case"square":{const sq=Math.max(hw,hh)+U*.2;ihw=sq*.7;ihh=sq*.7;break}case"quatrefoil":ihw=hw*.6;ihh=hh*.6;break}/* Icon interior */c2.strokeStyle="#000";c2.fillStyle="#000";c2.lineWidth=2.5;drawTS(c2,u.type,CX,CY,ihw,ihh);if(u.echelon)drawEch(c2,u.echelon,u.affiliation,u.type,u.isEquipment);if(u.modifiers&&u.modifiers.length)drawMods(c2,u.modifiers);/* Text labels outside frame — hide when icon is small */if(sz>55){c2.fillStyle="#000";c2.font=`bold ${U*2.0}px serif`;const textX=_isUAV?(hw*.85):a.shape==="circle"?_cr*0.72:hw;if(u.designation){c2.textAlign="right";c2.textBaseline="alphabetic";c2.fillText(u.designation,CX-textX-U*.3,B)}if(u.parentUnit){c2.textAlign="left";c2.textBaseline="alphabetic";c2.fillText(u.parentUnit,CX+textX+U*.3,B)}}c2.restore()}
 function _drawTrefoil(c2,cx,cy,r,hh){
 /* Aviation: two inverted triangles on vertical axis + horizontal lobes — compact */
 var hw=r/.7;
@@ -3342,29 +3342,56 @@ const IO={
         return"friendly";
       }
       function sidcToType(sidc){
-        /* Letter SIDC 2525C: pos 0=affiliation set, 4-9=function ID
-           G prefix = tactical graphic (not a unit) */
+        /* Letter SIDC 2525C: pos 0=scheme, 1=affiliation, 2=battle dim, 3=status, 4-9=function ID */
         if(!sidc)return"infantry";
-        if(sidc[0]==="G"||sidc[0]==="g")return"_tacgraphic";/* tactical graphic */
+        if(sidc[0]==="G"||sidc[0]==="g")return"_tacgraphic";
         var fn=(sidc.substring(4,10)||"").toUpperCase().replace(/-/g,"");
         var tbl={
-          UCIL:"infantry",UCI:"infantry",UC:"infantry",
-          UCIA:"airborne",UCIB:"airborne",
-          UCIZ:"mechanized",UCIM:"mechanized",
-          UCIS:"stryker",UCIR:"recon",
-          UA:"armor",UAR:"recon",UAC:"armor",
-          UCD:"armor",
-          UD:"aviation",UDA:"attack-helicopter",
-          UE:"engineer",
-          UF:"artillery",UFAA:"artillery",UFA:"artillery",
-          UFC:"mortar",UFB:"air-defense",
-          UFD:"antitank",
+          /* Infantry */
+          UCIL:"infantry",UCIN:"infantry",UCI:"infantry",UC:"infantry",
+          UCIA:"infantry",UCIB:"infantry",
+          /* Mech / Motorized Infantry */
+          UCIZ:"mechanized_infantry",UCIM:"mechanized_infantry",
+          UCIS:"armored_wheeled",
+          UCIR:"armored_recon",UCIC:"cavalry",
+          /* Naval Infantry / Marines */
+          UCIZ:"mechanized_infantry",UCDM:"naval_infantry",
+          /* Armor */
+          UA:"armor",UAUL:"armor",UAC:"armor",UCD:"armor",
+          UAUW:"armored_wheeled",UAUR:"armored_recon",UAR:"armored_recon",
+          /* Aviation */
+          UDAF:"attack_aviation",UDA:"attack_aviation",
+          UDAR:"recon_aviation",UDM:"medevac_aviation",
+          UD:"aviation",
+          /* UAV / UAS */
+          UCDMR:"uav",UCDR:"uav",MFQ:"uav",MFU:"uav",
+          /* Engineer */
+          UE:"engineer",UEB:"bridging",
+          /* Artillery & Fire Support */
+          UFAA:"artillery",UFA:"artillery",UF:"artillery",
+          UFBA:"mechanized_artillery",
+          UFCA:"rocket_artillery",UFC:"mortar",
+          UFB:"air_defense",UFDB:"air_defense",
+          UFD:"anti_armor",
+          /* SAM */
+          UFE:"sam",UFED:"sam",
+          /* Command & Signal */
+          USHQ:"headquarters",
+          USC:"signal",USM:"signal",
+          USE:"electronic_warfare",
+          USIA:"military_intelligence",USI:"military_intelligence",
+          /* Logistics */
+          US:"sustainment",USS:"supply",USX:"maintenance",
+          UST:"transportation",
           UH:"medical",UHS:"medical",
-          USS:"supply",USX:"maintenance",
-          USC:"signal",
-          USM:"signal"
+          /* Ordnance */
+          USO:"ordnance",
+          /* Special */
+          UCFA:"special_forces",UCF:"special_forces",
+          UCFR:"ranger",
+          UCFCA:"civil_affairs",
+          UCFP:"psyop"
         };
-        /* Try progressively shorter prefixes */
         for(var l=6;l>=2;l--){var k=fn.substring(0,l);if(tbl[k])return tbl[k]}
         return"infantry";
       }
@@ -3903,8 +3930,8 @@ const IO={
       var styleId="u_"+(u.id||"").replace(/[^a-zA-Z0-9]/g,"");
       styleBlock+='<Style id="'+styleId+'">';
       if(u.customIcon&&u.useCustomIcon!==false){var iconFn="images/icon_"+(iconIdx++)+".png";iconFiles[iconFn]=u.customIcon;styleBlock+='<IconStyle><scale>'+(u.iconScale||1)+'</scale><Icon><href>'+iconFn+'</href></Icon></IconStyle>';}
-      else{var aff=u.affiliation||"friendly";var col=aff==="hostile"?"ff0000ff":aff==="neutral"?"ff00ff00":"ffff8800";styleBlock+='<IconStyle><scale>'+(u.iconScale||1)+'</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href></Icon><color>'+col+'</color></IconStyle>';}
-      styleBlock+='</Style>\n';
+      else{/* Render military symbol to canvas PNG for KMZ */var _ic=document.createElement("canvas");_ic.width=256;_ic.height=256;var _ix=_ic.getContext("2d");_ix.clearRect(0,0,256,256);drawUnitIcon(_ix,u,128,128,220);var iconFn="images/icon_"+(iconIdx++)+".png";iconFiles[iconFn]=_ic.toDataURL("image/png");styleBlock+='<IconStyle><scale>'+(u.iconScale||1)+'</scale><Icon><href>'+iconFn+'</href></Icon><hotSpot x="0.5" y="0.5" xunits="fraction" yunits="fraction"/></IconStyle>';}
+      styleBlock+='<LabelStyle><scale>0</scale></LabelStyle></Style>\n';
     });
     S.graphics.filter(g=>layerIds.has(g.layerId)&&g.points&&g.points.length>=2).forEach(function(g){
       var styleId="g_"+(g.id||"").replace(/[^a-zA-Z0-9]/g,"");
@@ -3914,7 +3941,7 @@ const IO={
       else if(isP){styleBlock+='<PolyStyle><fill>0</fill></PolyStyle>';}
       styleBlock+='</Style>\n';
     });
-    function placemarkUnit(u){var nm=esc(u.designation||u.originalName||u.type);var sid="u_"+(u.id||"").replace(/[^a-zA-Z0-9]/g,"");var ext='<ExtendedData><Data name="sm:type"><value>'+esc(u.type||'')+'</value></Data><Data name="sm:affiliation"><value>'+esc(u.affiliation||'friendly')+'</value></Data><Data name="sm:echelon"><value>'+esc(u.echelon||'')+'</value></Data><Data name="sm:higherUnit"><value>'+esc(u.higherUnit||'')+'</value></Data><Data name="sm:parentUnit"><value>'+esc(u.parentUnit||'')+'</value></Data><Data name="sm:isHQ"><value>'+(u.isHQ?'true':'false')+'</value></Data><Data name="sm:modifiers"><value>'+esc(JSON.stringify(u.modifiers||[]))+'</value></Data></ExtendedData>';return'<Placemark><name>'+nm+'</name><styleUrl>#'+sid+'</styleUrl>'+ext+'<Point><coordinates>'+u.lon+','+u.lat+',0</coordinates></Point></Placemark>\n'}
+    function placemarkUnit(u){var _parts=[];if(u.designation)_parts.push(u.designation);var _ech=u.echelon?ECHELONS.find(function(x){return x.id===u.echelon}):null;if(_ech)_parts.push(_ech.label);_parts.push(TYPE_LABELS[u.type]||u.type);if(u.parentUnit)_parts.push(u.parentUnit);var nm=esc(u.designation||"");var nmFull=esc(_parts.join(" \u2022 "));var sid="u_"+(u.id||"").replace(/[^a-zA-Z0-9]/g,"");var ext='<ExtendedData><Data name="sm:type"><value>'+esc(u.type||'')+'</value></Data><Data name="sm:affiliation"><value>'+esc(u.affiliation||'friendly')+'</value></Data><Data name="sm:echelon"><value>'+esc(u.echelon||'')+'</value></Data><Data name="sm:higherUnit"><value>'+esc(u.higherUnit||'')+'</value></Data><Data name="sm:parentUnit"><value>'+esc(u.parentUnit||'')+'</value></Data><Data name="sm:isHQ"><value>'+(u.isHQ?'true':'false')+'</value></Data><Data name="sm:modifiers"><value>'+esc(JSON.stringify(u.modifiers||[]))+'</value></Data><Data name="sm:label"><value>'+nmFull+'</value></Data></ExtendedData>';return'<Placemark><name>'+nm+'</name><styleUrl>#'+sid+'</styleUrl>'+ext+'<Point><coordinates>'+u.lon+','+u.lat+',0</coordinates></Point></Placemark>\n'}
     function placemarkGfx(g){
       var nm=esc(g.label||"");
       var sid="g_"+(g.id||"").replace(/[^a-zA-Z0-9]/g,"");
@@ -3960,7 +3987,7 @@ const IO={
     var hexToKml=function(hex,alpha){hex=(hex||"#ff4444").replace("#","");var r=hex.substring(0,2),g2=hex.substring(2,4),b=hex.substring(4,6);var a=alpha!==undefined?Math.round(alpha*255).toString(16).padStart(2,"0"):"ff";return a+b+g2+r};
     function rectToCoords(g){var p0=g.points[0],p1=g.points[1];return[p0.lon+","+p0.lat+",0",p1.lon+","+p0.lat+",0",p1.lon+","+p1.lat+",0",p0.lon+","+p1.lat+",0",p0.lon+","+p0.lat+",0"].join(" ")}
     function circleToCoords(g){var c=g.points[0],e=g.points[1];var R=Math.sqrt(Math.pow((e.lat-c.lat),2)+Math.pow((e.lon-c.lon)*Math.cos(c.lat*Math.PI/180),2));var pts=[];for(var i=0;i<=64;i++){var a=Math.PI*2*i/64;pts.push((c.lon+R*Math.sin(a)/Math.cos(c.lat*Math.PI/180))+","+(c.lat+R*Math.cos(a))+",0")}return pts.join(" ")}
-    function placemarkUnit(u){var nm=esc(u.designation||u.originalName||u.type);var aff=u.affiliation||"friendly";var col=aff==="hostile"?"ff0000ff":aff==="neutral"?"ff00ff00":"ffff8800";var ext='<ExtendedData><Data name="sm:type"><value>'+esc(u.type||'')+'</value></Data><Data name="sm:affiliation"><value>'+esc(u.affiliation||'friendly')+'</value></Data><Data name="sm:echelon"><value>'+esc(u.echelon||'')+'</value></Data><Data name="sm:higherUnit"><value>'+esc(u.higherUnit||'')+'</value></Data><Data name="sm:parentUnit"><value>'+esc(u.parentUnit||'')+'</value></Data><Data name="sm:isHQ"><value>'+(u.isHQ?'true':'false')+'</value></Data><Data name="sm:modifiers"><value>'+esc(JSON.stringify(u.modifiers||[]))+'</value></Data></ExtendedData>';return'<Placemark><name>'+nm+'</name><Style><IconStyle><scale>'+(u.iconScale||1)+'</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href></Icon><color>'+col+'</color></IconStyle></Style><Point><coordinates>'+u.lon+','+u.lat+',0</coordinates></Point></Placemark>\n'}
+    function placemarkUnit(u){var _parts=[];if(u.designation)_parts.push(u.designation);var _ech=u.echelon?ECHELONS.find(function(x){return x.id===u.echelon}):null;if(_ech)_parts.push(_ech.label);_parts.push(TYPE_LABELS[u.type]||u.type);if(u.parentUnit)_parts.push(u.parentUnit);var nm=esc(u.designation||"");var nmFull=esc(_parts.join(" \u2022 "));var aff=u.affiliation||"friendly";var col=aff==="hostile"?"ff0000ff":aff==="neutral"?"ff00ff00":"ffff8800";var ext='<ExtendedData><Data name="sm:type"><value>'+esc(u.type||'')+'</value></Data><Data name="sm:affiliation"><value>'+esc(u.affiliation||'friendly')+'</value></Data><Data name="sm:echelon"><value>'+esc(u.echelon||'')+'</value></Data><Data name="sm:higherUnit"><value>'+esc(u.higherUnit||'')+'</value></Data><Data name="sm:parentUnit"><value>'+esc(u.parentUnit||'')+'</value></Data><Data name="sm:isHQ"><value>'+(u.isHQ?'true':'false')+'</value></Data><Data name="sm:modifiers"><value>'+esc(JSON.stringify(u.modifiers||[]))+'</value></Data></ExtendedData>';return'<Placemark><name>'+nm+'</name><Style><IconStyle><scale>'+(u.iconScale||1)+'</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href></Icon><color>'+col+'</color></IconStyle></Style><Point><coordinates>'+u.lon+','+u.lat+',0</coordinates></Point></Placemark>\n'}
     function placemarkGfx(g){
       var nm=esc(g.label||"");
       var lineCol=hexToKml(g.color||"#ff4444",g.opacity!=null?g.opacity:1);var isP=g.tool==="polygon"||g.tool==="rectangle"||g.tool==="circle";
