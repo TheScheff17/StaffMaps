@@ -3752,6 +3752,8 @@ const IO={
       const iconDataUrl=resolveIconHref(pm);
       /* Skip label-only point placemarks (no name, has icon — typically a rendered label image from StaffMaps) */
       if(!rawName&&!rawDesc&&iconDataUrl){return null}
+      /* Also skip if no name/desc and style references a custom icon file (even if image extraction failed) */
+      if(!rawName&&!rawDesc){var _chkSt=resolveStyle(pm);if(_chkSt){var _chkIs=_chkSt.getElementsByTagName("IconStyle");if(_chkIs.length){var _chkIc=_chkIs[0].getElementsByTagName("Icon");if(_chkIc.length){var _chkHr=_chkIc[0].getElementsByTagName("href");if(_chkHr.length){var _hr=_chkHr[0].textContent.trim();if(_hr&&!/maps\.google\.com|earth\.google\.com/i.test(_hr))return null}}}}}
       return{id:"u"+Date.now()+Math.random().toString(36).substr(2,4),lat,lon,
         type:iconDataUrl&&parsed.type==="infantry"?"waypoint":parsed.type,affiliation:finalAff,echelon:parsed.echelon,
         designation:parsed.designation,parentUnit:parsed.parentUnit,higherUnit:parsed.higherUnit||"",
@@ -3943,6 +3945,7 @@ const IO={
     const data={version:"3.0",app:"StaffMaps",timestamp:new Date().toISOString(),map:{lat:S.lat,lon:S.lon,zoom:S.zoom,tileSource:S.tileSource},units:exportUnits,graphics:exportGraphics,layers:exportLayers,packages:exportPkgs};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
     dlBlob(blob,"scheffmap-export-"+new Date().toISOString().slice(0,10)+".tacmap");IO.notify("Exported "+(exportUnits.length+exportGraphics.length)+" features as .tacmap")},
+  function _u8ToB64(u8){var CHUNK=0x8000;var parts=[];for(var i=0;i<u8.length;i+=CHUNK){parts.push(String.fromCharCode.apply(null,u8.subarray(i,Math.min(i+CHUNK,u8.length))))}return btoa(parts.join(""))}
   importKMZ(buf){
     try{
       const dv=new DataView(buf);let off=0;let kmlText=null;const embeddedFiles={};const pendingDeflates=[];
@@ -3951,18 +3954,18 @@ const IO={
         const comp=dv.getUint16(off+8,true),cSize=dv.getUint32(off+18,true),uSize=dv.getUint32(off+22,true);
         const fnLen=dv.getUint16(off+26,true),exLen=dv.getUint16(off+28,true);
         const fn=new TextDecoder().decode(new Uint8Array(buf,off+30,fnLen));
-        const dataOff=off+30+fnLen+exLen;const raw=new Uint8Array(buf,dataOff,cSize);const fnL=fn.toLowerCase();
+        const dataOff=off+30+fnLen+exLen;const raw=new Uint8Array(new Uint8Array(buf,dataOff,cSize));const fnL=fn.toLowerCase();
         if(fnL.endsWith(".kml")){if(comp===0)kmlText=new TextDecoder().decode(raw);else if(comp===8)pendingDeflates.push({fn,raw:new Uint8Array(raw),isKml:true})}
         else if(/\.(png|jpg|jpeg|gif|bmp|svg)$/i.test(fnL)){
           const ext=fnL.split(".").pop(),mm={png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",gif:"image/gif",bmp:"image/bmp",svg:"image/svg+xml"},mime=mm[ext]||"image/png";
-          if(comp===0){let b="";const by=new Uint8Array(raw);for(let i=0;i<by.length;i++)b+=String.fromCharCode(by[i]);embeddedFiles[fn]=`data:${mime};base64,${btoa(b)}`}
+          if(comp===0){var _cp=new Uint8Array(cSize);_cp.set(new Uint8Array(buf,dataOff,cSize));var _b64=_u8ToB64(_cp);embeddedFiles[fn]=`data:${mime};base64,${_b64}`}
           else if(comp===8)pendingDeflates.push({fn,raw:new Uint8Array(raw),isKml:false,mime})}
         off=dataOff+(cSize||uSize)}
       if(pendingDeflates.length>0){let done=0;const tot=pendingDeflates.length;
         pendingDeflates.forEach(ent=>{const ds=new DecompressionStream("deflate-raw"),wr=ds.writable.getWriter();wr.write(ent.raw);wr.close();
           const rd=ds.readable.getReader(),ch=[];
           const pump=()=>rd.read().then(({done:d,value:v})=>{if(d){const fl=new Uint8Array(ch.reduce((a,c)=>a+c.length,0));let p=0;ch.forEach(c=>{fl.set(c,p);p+=c.length});
-            if(ent.isKml)kmlText=new TextDecoder().decode(fl);else{let b="";for(let i=0;i<fl.length;i++)b+=String.fromCharCode(fl[i]);embeddedFiles[ent.fn]=`data:${ent.mime};base64,${btoa(b)}`}
+            if(ent.isKml)kmlText=new TextDecoder().decode(fl);else{var _b64d=_u8ToB64(fl);embeddedFiles[ent.fn]=`data:${ent.mime};base64,${_b64d}`}
             done++;if(done===tot){if(kmlText)IO.importKML(kmlText,embeddedFiles);else IO.notify("No .kml in KMZ","error")}return}ch.push(v);return pump()});pump()});return}
       if(kmlText)IO.importKML(kmlText,embeddedFiles);else IO.notify("No .kml file found in KMZ","error");
     }catch(e){IO.notify("KMZ error: "+e.message,"error")}
