@@ -1460,49 +1460,46 @@ function renderComms(){
     }
     h+='<div class="row" style="margin-top:8px"><button class="btn danger" onclick="netLeave()">Leave Room</button></div>';
   }
-  h+='<div class="section"><div class="section-title">Connection Troubleshooting</div>';
-  h+='<div style="font-size:10px;color:var(--fg-dim,#888);margin-bottom:6px">If auto-connect fails on restricted networks, use manual signaling below.</div>';
-  h+='<button class="btn" style="width:100%;margin-bottom:4px" onclick="netDiag()">Run Diagnostics</button>';
-  h+='<div id="net-diag-out" style="font-size:10px;color:#aaa;margin-bottom:6px;white-space:pre-wrap"></div>';
+  h+='<div class="section">';
+  h+='<div class="section-title">Connection Troubleshooting</div>';
+  h+='<div style="font-size:11px;color:#aaa;margin-bottom:8px">If auto-connect fails on restricted networks, use manual signaling below.</div>';
+  h+='<button class="btn" style="width:100%;margin-bottom:6px" onclick="netDiag()">Run Diagnostics</button>';
+  h+='<div id="net-diag-out" style="font-size:10px;color:#aaa;min-height:16px;margin-bottom:6px"></div>';
   h+='<button class="btn" style="width:100%;margin-bottom:4px" onclick="netManualToggle()">Manual Connect (Firewall Bypass)</button>';
-  h+='<div id="net-manual" style="display:none;font-size:10px">';
-  h+='<div style="color:#aaa;margin-bottom:8px">Same building WiFi required. Each person picks their role — the host connects to each peer one at a time.</div>';
-
-  h+='<div style="display:flex;gap:4px;margin-bottom:10px">';
-  h+='<button id="mr-host" class="btn primary" style="flex:1" onclick="netManualRole('host')">I am the HOST</button>';
-  h+='<button id="mr-peer" class="btn" style="flex:1" onclick="netManualRole('peer')">I am a PEER</button>';
+  h+='<div id="net-manual" style="display:none;font-size:10px;margin-top:6px">';
+  h+='<div style="color:#aaa;margin-bottom:8px">Same building WiFi required. Pick your role.</div>';
+  h+='<div style="display:flex;gap:4px;margin-bottom:8px">';
+  h+='<button id="mr-host" class="btn" style="flex:1" onclick="netManualRole(\'host\')">I am HOST</button>';
+  h+='<button id="mr-peer" class="btn" style="flex:1" onclick="netManualRole(\'peer\')">I am PEER</button>';
   h+='</div>';
-
   h+='<div id="net-manual-host" style="display:none">';
   h+='<div style="background:#1e2a1e;border:1px solid #3a5a3a;border-radius:6px;padding:8px;margin-bottom:8px">';
-  h+='<div style="color:#7fc97f;font-weight:bold;margin-bottom:4px">STEP 1 — Generate your offer</div>';
-  h+='<div style="color:#aaa;margin-bottom:6px">Click, wait 5 sec, then send the copied text to your first peer via Teams/text. Repeat for each additional peer.</div>';
+  h+='<b style="color:#7fc97f">STEP 1 — Generate offer</b>';
+  h+='<div style="color:#aaa;font-size:9px;margin:4px 0">Click, wait 5s, send copied text to peer via Teams/text. Repeat per peer.</div>';
   h+='<button class="btn primary" style="width:100%;margin-bottom:6px" onclick="netManualOffer()">Generate Offer</button>';
-  h+='<textarea id="net-manual-out" readonly placeholder="Offer appears here — auto-copied to clipboard" style="width:100%;height:50px;font-size:9px;background:#111;color:#eee;border:1px solid #444;border-radius:4px;padding:4px;box-sizing:border-box;resize:none"></textarea>';
-  h+='<button class="btn" style="width:100%;margin-top:4px" onclick="netManualCopy()">📋 Copy Again</button>';
-  h+='<div id="net-manual-qr" style="margin-top:8px;display:flex;justify-content:center;min-height:0"></div>';
-  h+='<div style="font-size:9px;color:#666;text-align:center;margin-top:2px">Or peer scans QR code</div>';
+  h+='<textarea id="net-manual-out" readonly placeholder="Offer appears here — auto-copied" style="width:100%;height:50px;font-size:9px;background:#111;color:#eee;border:1px solid #444;border-radius:4px;padding:4px;box-sizing:border-box;resize:none"></textarea>';
+  h+='<div id="net-manual-qr" style="margin-top:6px;display:flex;justify-content:center"></div>';
+  h+='<button class="btn" style="width:100%;margin-top:4px" onclick="netManualCopy()">Copy Again</button>';
   h+='</div>';
   h+='<div style="background:#2a1e1e;border:1px solid #5a3a3a;border-radius:6px;padding:8px">';
-  h+='<div style="color:#c97f7f;font-weight:bold;margin-bottom:4px">STEP 2 — Apply each peer's answer</div>';
-  h+='<div style="color:#aaa;margin-bottom:6px">When a peer sends you their answer, paste it here and apply. Repeat for each peer.</div>';
-  h+='<textarea id="net-manual-in2" placeholder="Paste answer from peer here..." style="width:100%;height:50px;font-size:9px;background:#111;color:#eee;border:1px solid #444;border-radius:4px;padding:4px;box-sizing:border-box;resize:none;margin-bottom:4px"></textarea>';
+  h+='<b style="color:#c97f7f">STEP 2 — Apply answer</b>';
+  h+='<div style="color:#aaa;font-size:9px;margin:4px 0">Paste answer received from peer, then apply.</div>';
+  h+='<textarea id="net-manual-in2" placeholder="Paste answer from peer..." style="width:100%;height:50px;font-size:9px;background:#111;color:#eee;border:1px solid #444;border-radius:4px;padding:4px;box-sizing:border-box;resize:none;margin-bottom:4px"></textarea>';
   h+='<button class="btn primary" style="width:100%" onclick="netManualApply()">Apply Answer</button>';
   h+='</div>';
   h+='</div>';
-
   h+='<div id="net-manual-peer" style="display:none">';
   h+='<div style="background:#1e1e2a;border:1px solid #3a3a5a;border-radius:6px;padding:8px">';
-  h+='<div style="color:#7f9fc9;font-weight:bold;margin-bottom:4px">YOUR STEP — Respond to the host</div>';
-  h+='<div style="color:#aaa;margin-bottom:6px">Paste the offer the host sent you, generate your answer, and send it back to them.</div>';
-  h+='<textarea id="net-manual-in" placeholder="Paste offer from host here..." style="width:100%;height:50px;font-size:9px;background:#111;color:#eee;border:1px solid #444;border-radius:4px;padding:4px;box-sizing:border-box;resize:none;margin-bottom:4px"></textarea>';
-  h+='<button class="btn primary" style="width:100%;" onclick="netManualAnswer()">Generate Answer &amp; Copy</button>';
+  h+='<b style="color:#7f9fc9">YOUR STEP — Respond to host</b>';
+  h+='<div style="color:#aaa;font-size:9px;margin:4px 0">Paste offer, generate answer, send it back to host.</div>';
+  h+='<textarea id="net-manual-in" placeholder="Paste offer from host..." style="width:100%;height:50px;font-size:9px;background:#111;color:#eee;border:1px solid #444;border-radius:4px;padding:4px;box-sizing:border-box;resize:none;margin-bottom:4px"></textarea>';
+  h+='<button class="btn primary" style="width:100%" onclick="netManualAnswer()">Generate Answer &amp; Copy</button>';
+  h+='</div>';
+  h+='</div>';
   h+='</div>';
   h+='</div>';
 
-  h+='</div>';
-  h+='</div>';
-  h+='<div class="section"><div class="section-title">Encryption</div>';
+    h+='<div class="section"><div class="section-title">Encryption</div>';
   h+='<div class="toggle-row"><span>Encrypt</span><label class="switch"><input type="checkbox" id="net-enc"'+(n.encEnabled?" checked":"")+'><span class="slider"></span></label></div>';
   h+='<div id="enc-fields" style="'+(n.encEnabled?'':'display:none')+'">';
   h+='<label>Passphrase</label><input type="password" id="net-pass" value="'+(n.passphrase||"")+'" placeholder="Passphrase">';
@@ -2876,22 +2873,7 @@ function attemptHostMigration(){
   var savedCode=n.roomCode;
   var savedName=n.peerName;
   /* Create new peer with same room code */
-  n.peer=new Peer("staffmaps-"+savedCode,{
-    debug:0,
-    config:{
-      iceServers:[
-        {urls:"stun:stun.l.google.com:19302"},
-        {urls:"stun:stun1.l.google.com:19302"},
-        {urls:"stun:stun.cloudflare.com:3478"},
-        {urls:"stun:stun.relay.metered.ca:80"},
-        {urls:"turn:standard.relay.metered.ca:80",username:"openrelayproject",credential:"openrelayproject"},
-        {urls:"turn:standard.relay.metered.ca:80?transport=tcp",username:"openrelayproject",credential:"openrelayproject"},
-        {urls:"turn:standard.relay.metered.ca:443",username:"openrelayproject",credential:"openrelayproject"},
-        {urls:"turns:standard.relay.metered.ca:443?transport=tcp",username:"openrelayproject",credential:"openrelayproject"}
-      ],
-      iceTransportPolicy:"all"
-    }
-  });
+  n.peer=new Peer("staffmaps-"+savedCode,{debug:0});
   n.peer.on("open",function(){
     n.isHost=true;n.mode="hosting";n.roomCode=savedCode;
     n.hostConn=null;n.conns=[];n.peerNames={};n.peerPermissions={};
@@ -3099,22 +3081,7 @@ function shouldBroadcastEdit(msg){
 function netBroadcast(msg){const n=S._net;if(n.mode==="offline")return;if(!shouldBroadcastEdit(msg))return;const str=JSON.stringify(msg);if(n.isHost){n.conns.forEach(c=>{try{c.conn.send(str)}catch(e){}})}else if(n.hostConn){try{n.hostConn.send(str)}catch(e){}}}
 function netCreateRoom(){
   const n=S._net;n.roomCode=Math.random().toString(36).substr(2,6).toUpperCase();
-  n.peer=new Peer("staffmaps-"+n.roomCode,{
-    debug:0,
-    config:{
-      iceServers:[
-        {urls:"stun:stun.l.google.com:19302"},
-        {urls:"stun:stun1.l.google.com:19302"},
-        {urls:"stun:stun.cloudflare.com:3478"},
-        {urls:"stun:stun.relay.metered.ca:80"},
-        {urls:"turn:standard.relay.metered.ca:80",username:"openrelayproject",credential:"openrelayproject"},
-        {urls:"turn:standard.relay.metered.ca:80?transport=tcp",username:"openrelayproject",credential:"openrelayproject"},
-        {urls:"turn:standard.relay.metered.ca:443",username:"openrelayproject",credential:"openrelayproject"},
-        {urls:"turns:standard.relay.metered.ca:443?transport=tcp",username:"openrelayproject",credential:"openrelayproject"}
-      ],
-      iceTransportPolicy:"all"
-    }
-  });
+  n.peer=new Peer("staffmaps-"+n.roomCode,{debug:0});
   n.peer.on("open",()=>{n.isHost=true;n.mode="hosting";n.status="Hosting";updateNetDot("connected");renderFloatingPanel()});
   n.peer.on("connection",conn=>{
     conn.on("open",()=>{n.conns.push({conn,peerId:conn.peer,joinOrder:n.nextJoinOrder++,_lastPong:Date.now()});/* Build fullState with only shared layers */
@@ -3133,22 +3100,7 @@ function netCreateRoom(){
 
 function netJoinRoom(){
   const n=S._net,code=(document.getElementById("net-code")||{}).value||n.roomCode;if(!code)return;
-  n.roomCode=code.toUpperCase();n.peer=new Peer(undefined,{
-    debug:0,
-    config:{
-      iceServers:[
-        {urls:"stun:stun.l.google.com:19302"},
-        {urls:"stun:stun1.l.google.com:19302"},
-        {urls:"stun:stun.cloudflare.com:3478"},
-        {urls:"stun:stun.relay.metered.ca:80"},
-        {urls:"turn:standard.relay.metered.ca:80",username:"openrelayproject",credential:"openrelayproject"},
-        {urls:"turn:standard.relay.metered.ca:80?transport=tcp",username:"openrelayproject",credential:"openrelayproject"},
-        {urls:"turn:standard.relay.metered.ca:443",username:"openrelayproject",credential:"openrelayproject"},
-        {urls:"turns:standard.relay.metered.ca:443?transport=tcp",username:"openrelayproject",credential:"openrelayproject"}
-      ],
-      iceTransportPolicy:"all"
-    }
-  });
+  n.roomCode=code.toUpperCase();n.peer=new Peer(undefined,{debug:0});
   n.peer.on("open",()=>{
     const conn=n.peer.connect("staffmaps-"+n.roomCode);n.hostConn=conn;
     conn.on("open",()=>{n.mode="connected";n.status="Connected";updateNetDot("connected");S._net._lastHostPing=Date.now();conn.send(JSON.stringify({type:"hello",name:n.peerName}));renderFloatingPanel()});
@@ -3158,237 +3110,19 @@ function netJoinRoom(){
 
 function netLeave(){const n=S._net;if(n.peer)n.peer.destroy();n.peer=null;n.conns=[];n.hostConn=null;n.isHost=false;n.roomCode=null;n.mode="offline";n.status="";n.peerNames={};n.sharedLayers={};n.sharedEditLayer=null;n.editScope="local";n.peerPermissions={};n.editRequests=[];n.editRequestStatus=null;n.roomRoster=[];n.wargame={active:false,phase:"planning",roles:{},myRole:null,layerRoles:{},orders:[],turnNumber:1,turnLog:[]};S._wargameOrderPending=null;updateNetDot("");renderFloatingPanel();requestRender()}
 
-/* ── Manual WebRTC Signaling (firewall bypass) ── */
-var _manualPC=null,_manualOffer=null,_manualPCs=[];
-function netManualToggle(){
-  var el=document.getElementById("net-manual");
-  if(el)el.style.display=el.style.display==="none"?"block":"none";
-}
-function netManualRole(role){
-  var hEl=document.getElementById('net-manual-host');
-  var pEl=document.getElementById('net-manual-peer');
-  var hBtn=document.getElementById('mr-host');
-  var pBtn=document.getElementById('mr-peer');
-  if(hEl)hEl.style.display=role==='host'?'block':'none';
-  if(pEl)pEl.style.display=role==='peer'?'block':'none';
-  if(hBtn)hBtn.className='btn'+(role==='host'?' primary':'');
-  if(pBtn)pBtn.className='btn'+(role==='peer'?' primary':'');
-}
-function _manualIceConfig(){
-  /* No external STUN/TURN needed — use host + mDNS candidates only.
-     mDNS (*.local addresses) works across routers on same building network
-     without internet. Chrome/Edge/Firefox all support WebRTC mDNS.
-     iceCandidatePoolSize pre-gathers candidates for faster offer generation. */
-  return {iceServers:[],iceCandidatePoolSize:10};
-}
-function _stripSdp(sdp){
-  /* Remove lines not needed for data-only channels */
-  return sdp.split('\n').filter(function(l){
-    return l.trim()&&!l.startsWith('a=extmap')&&l!=='a=msid-semantic: WMS';
-  }).join('\n');
-}
-function _compressOffer(obj){
-  /* Compress JSON with DecompressionStream's counterpart — use pako if available,
-     otherwise fall back to plain base64 */
-  var stripped={sdp:{type:obj.sdp.type,sdp:_stripSdp(obj.sdp.sdp||'')}};
-  var json=JSON.stringify(stripped);
-  /* Try CompressionStream (Chrome 80+, Safari 16.4+, Firefox 113+) */
-  if(typeof CompressionStream!=='undefined'){
-    return new Promise(function(resolve){
-      var cs=new CompressionStream('deflate-raw');
-      var w=cs.writable.getWriter(),r=cs.readable.getReader(),chunks=[];
-      function pump(){r.read().then(function(res){
-        if(res.done){
-          var merged=new Uint8Array(chunks.reduce(function(s,c){return s+c.length},0));
-          var off=0;chunks.forEach(function(c){merged.set(c,off);off+=c.length});
-          /* base64url encode — no +/= to avoid copy issues */
-          var b64=btoa(String.fromCharCode.apply(null,merged))
-            .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-          resolve('Z'+b64);/* Z prefix = compressed */
-        }else{chunks.push(res.value);pump()}
-      })}
-      pump();
-      w.write(new TextEncoder().encode(json));w.close();
-    });
-  }
-  return Promise.resolve('R'+btoa(unescape(encodeURIComponent(json)))); /* R = raw */
-}
-function _decompressOffer(str){
-  if(!str)return Promise.reject(new Error('Empty'));
-  if(str[0]==='R'){
-    try{return Promise.resolve(JSON.parse(decodeURIComponent(escape(atob(str.slice(1))))))}
-    catch(e){return Promise.reject(e)}
-  }
-  if(str[0]==='Z'){
-    var b64=str.slice(1).replace(/-/g,'+').replace(/_/g,'/');
-    var bin=atob(b64);
-    var bytes=new Uint8Array(bin.length);
-    for(var i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
-    var ds=new DecompressionStream('deflate-raw');
-    var w=ds.writable.getWriter(),r=ds.readable.getReader(),chunks=[];
-    return new Promise(function(resolve,reject){
-      function pump(){r.read().then(function(res){
-        if(res.done){
-          var merged=new Uint8Array(chunks.reduce(function(s,c){return s+c.length},0));
-          var off=0;chunks.forEach(function(c){merged.set(c,off);off+=c.length});
-          try{resolve(JSON.parse(new TextDecoder().decode(merged)))}catch(e){reject(e)}
-        }else{chunks.push(res.value);pump()}
-      },reject)}
-      pump();w.write(bytes);w.close();
-    });
-  }
-  /* Legacy: plain base64 JSON with candidates[] */
-  try{return Promise.resolve(JSON.parse(atob(str)))}catch(e){return Promise.reject(e)}
-}
-function _showQR(text,containerId){
-  var el=document.getElementById(containerId);
-  if(!el||typeof QRCode==='undefined')return;
-  el.innerHTML='';
-  try{new QRCode(el,{text:text,width:180,height:180,colorDark:'#ffffff',colorLight:'#111111',correctLevel:QRCode.CorrectLevel.M})}
-  catch(e){}
-}
-function _finishManualGather(pc,candidates,label,outId){
-  var out={sdp:pc.localDescription,candidates:candidates};
-  _compressOffer(out).then(function(compressed){
-    var el=document.getElementById(outId||'net-manual-out');
-    if(el)el.value=compressed;
-    /* Auto-copy */
-    if(navigator.clipboard&&navigator.clipboard.writeText){
-      navigator.clipboard.writeText(compressed).catch(function(){});
-    }else if(el){el.select();try{document.execCommand('copy')}catch(e){}}
-    /* Show QR */
-    _showQR(compressed,'net-manual-qr');
-    IO.notify(label+' ready ('+compressed.length+' chars) — copied to clipboard or scan QR');
-  });
-}
-function netManualOffer(){
-  var outId="net-manual-out";
-  /* Each offer creates a fresh PC — host can connect multiple peers */
-  var pc=new RTCPeerConnection(_manualIceConfig());
-  _manualPC=pc;_manualPCs.push(pc);
-  var dc=pc.createDataChannel("staffmaps");
-  dc.onopen=function(){IO.notify("Manual channel open — connected! Syncing map...")};
-  dc.onmessage=function(e){try{handleNetMsg(JSON.parse(e.data),"manual")}catch(err){}};
-  var candidates=[],done=false;
-  function finish(){
-    if(done)return;done=true;
-    _finishManualGather(pc,candidates,"Offer",outId);
-  }
-  pc.onicecandidate=function(e){
-    if(!e.candidate){finish();return}
-    candidates.push(e.candidate);
-  };
-  pc.onicegatheringstatechange=function(){
-    if(_manualPC.iceGatheringState==="complete")finish();
-  };
-  pc.createOffer().then(function(offer){
-    return pc.setLocalDescription(offer);
-  }).then(function(){
-    /* Timeout fallback: if gathering never completes (all servers blocked),
-       fire after 3s with whatever host candidates we have */
-    setTimeout(finish,5000);
-  }).catch(function(e){IO.notify("Offer error: "+e.message,"error")});
-  IO.notify("Generating offer… (up to 5 seconds)");
-}
-function netManualAnswer(){
-  var inp=document.getElementById("net-manual-in");
-  var outId="net-manual-out";
-  if(!inp||!inp.value.trim()){IO.notify("Paste the offer text first","error");return}
-  var raw=inp.value.trim();
-  _decompressOffer(raw).then(function(data){
-    if(!data||!data.sdp){IO.notify("Offer missing SDP — copy the full text","error");return}
-    _netManualAnswerWith(data);
-  }).catch(function(){IO.notify("Invalid offer — make sure you copied the entire block","error")});
-}
-function _netManualAnswerWith(data){
-  if(_manualPC)_manualPC.close();
-  _manualPC=new RTCPeerConnection(_manualIceConfig());
-  _manualPC.ondatachannel=function(e){
-    var ch=e.channel;
-    ch.onopen=function(){IO.notify("Manual channel open — connected!")};
-    ch.onmessage=function(ev){try{handleNetMsg(JSON.parse(ev.data),"manual")}catch(err){}};
-  };
-  var candidates=[],done=false;
-  function finish(){
-    if(done)return;done=true;
-    _finishManualGather(_manualPC,candidates,"Answer",outId);
-  }
-  _manualPC.onicecandidate=function(e){
-    if(!e.candidate){finish();return}
-    candidates.push(e.candidate);
-  };
-  _manualPC.onicegatheringstatechange=function(){
-    if(_manualPC.iceGatheringState==="complete")finish();
-  };
-  _manualPC.setRemoteDescription(data.sdp).then(function(){
-    (data.candidates||[]).forEach(function(c){_manualPC.addIceCandidate(c).catch(function(){})});
-    return _manualPC.createAnswer();
-  }).then(function(ans){
-    return _manualPC.setLocalDescription(ans);
-  }).then(function(){
-    setTimeout(finish,5000);
-  }).catch(function(e){IO.notify("Answer error: "+e.message,"error")});
-  IO.notify("Generating answer… (up to 5 seconds)");
-}
-function netManualCopy(){
-  var el=document.getElementById("net-manual-out");
-  if(!el||!el.value){IO.notify("Nothing to copy yet","error");return}
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(el.value).then(function(){IO.notify("Copied to clipboard — paste in chat/Teams/text to other peer")}).catch(function(){el.select();document.execCommand("copy");IO.notify("Copied")});
-  }else{el.select();document.execCommand("copy");IO.notify("Copied")}
-}
-function netManualApply(){
-  var inp=document.getElementById("net-manual-in2");
-  if(!inp||!inp.value.trim()){IO.notify("Paste the answer first","error");return}
-  if(!_manualPC){IO.notify("Generate offer first","error");return}
-  _decompressOffer(inp.value.trim()).then(function(data){
-    if(!data||!data.sdp){IO.notify("Answer missing SDP","error");return}
-    _netManualApplyWith(data);
-  }).catch(function(){IO.notify("Invalid answer — copy the full text","error")});
-}
-function _netManualApplyWith(data){
-  if(!_manualPC){IO.notify("Generate offer first","error");return}
-  _manualPC.setRemoteDescription(data.sdp).then(function(){
-    (data.candidates||[]).forEach(function(c){_manualPC.addIceCandidate(c).catch(function(){})});
-    IO.notify("Answer applied — waiting for connection...");
-  }).catch(function(e){IO.notify("Apply error: "+e.message,"error")});
-}
-/* ── Network Diagnostics ── */
-function netDiag(){
-  var out=document.getElementById("net-diag-out");
-  if(out)out.textContent="Running...";
-  var results=[];
-  /* Test STUN reachability via RTCPeerConnection ice gathering */
-  var pc=new RTCPeerConnection({iceServers:[
-    {urls:"stun:stun.l.google.com:19302"},
-    {urls:"stun:stun.cloudflare.com:3478"},
-    {urls:"turn:standard.relay.metered.ca:80",username:"openrelayproject",credential:"openrelayproject"}
-  ]});
-  pc.createDataChannel("diag");
-  var types={host:0,srflx:0,relay:0};
-  var done=false;
-  pc.onicecandidate=function(e){
-    if(!e.candidate)return;
-    var t=e.candidate.type;
-    if(t&&types[t]!==undefined)types[t]++;
-  };
-  pc.onicegatheringstatechange=function(){
-    if(pc.iceGatheringState==="complete"&&!done){
-      done=true;
-      var lines=[];
-      lines.push("Local (host): "+(types.host>0?"✓ OK":"✗ None"));
-      lines.push("STUN (srflx): "+(types.srflx>0?"✓ Reachable":"✗ Blocked"));
-      lines.push("TURN (relay): "+(types.relay>0?"✓ Reachable":"✗ Blocked"));
-      if(types.relay>0)lines.push("\nTURN relay available — auto-connect should work.");
-      else if(types.srflx>0)lines.push("\nSTUN OK but no TURN — may fail on symmetric NAT.");
-      else lines.push("\nAll external servers blocked. Use Manual Connect.");
-      if(out)out.textContent=lines.join("\n");
-      pc.close();
-    }
-  };
-  pc.createOffer().then(function(o){return pc.setLocalDescription(o)});
-  setTimeout(function(){if(!done){done=true;if(out)out.textContent="Timeout — network may be blocking UDP. Try Manual Connect.";pc.close()}},8000);
-}
+var _manualPC=null,_manualPCs=[];
+function netManualRole(role){var h=document.getElementById('net-manual-host'),p=document.getElementById('net-manual-peer'),hb=document.getElementById('mr-host'),pb=document.getElementById('mr-peer');if(h)h.style.display=role==='host'?'block':'none';if(p)p.style.display=role==='peer'?'block':'none';if(hb)hb.className='btn'+(role==='host'?' primary':'');if(pb)pb.className='btn'+(role==='peer'?' primary':'');}
+function _manualIceConfig(){return{iceServers:[],iceCandidatePoolSize:10}}
+function _encodeOffer(obj){var out={t:obj.sdp.type,s:(obj.sdp.sdp||'').split('\n').filter(function(l){return l.trim()&&l.indexOf('a=extmap')!==0&&l!=='a=msid-semantic: WMS'}).join('\n')};return btoa(unescape(encodeURIComponent(JSON.stringify(out))));}
+function _decodeOffer(str){try{var raw=JSON.parse(decodeURIComponent(escape(atob(str))));if(raw.t&&raw.s)return{sdp:{type:raw.t,sdp:raw.s},candidates:[]};if(raw.sdp)return raw;}catch(e){}return null;}
+function _showQR(text,cid){var el=document.getElementById(cid);if(!el||typeof QRCode==='undefined')return;el.innerHTML='';try{new QRCode(el,{text:text,width:180,height:180,colorDark:'#fff',colorLight:'#111',correctLevel:QRCode.CorrectLevel.M})}catch(e){}}
+function _finishManualGather(pc,candidates,label,outId){var encoded=_encodeOffer({sdp:pc.localDescription,candidates:candidates});var el=document.getElementById(outId||'net-manual-out');if(el)el.value=encoded;if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(encoded).catch(function(){});else if(el){el.select();try{document.execCommand('copy')}catch(e){}}_showQR(encoded,'net-manual-qr');IO.notify(label+' ready ('+encoded.length+' chars) — copied');}
+function netManualOffer(){var pc=new RTCPeerConnection(_manualIceConfig());_manualPC=pc;_manualPCs.push(pc);var dc=pc.createDataChannel('staffmaps');dc.onopen=function(){IO.notify('Connected!')};dc.onmessage=function(e){try{handleNetMsg(JSON.parse(e.data),'manual')}catch(err){}};var candidates=[],done=false;function finish(){if(done)return;done=true;_finishManualGather(pc,candidates,'Offer','net-manual-out')}pc.onicecandidate=function(e){if(!e.candidate){finish();return}candidates.push(e.candidate)};pc.onicegatheringstatechange=function(){if(pc.iceGatheringState==='complete')finish()};pc.createOffer().then(function(o){return pc.setLocalDescription(o)}).then(function(){setTimeout(finish,5000)}).catch(function(e){IO.notify('Offer error: '+e.message,'error')});IO.notify('Generating offer…');}
+function netManualAnswer(){var inp=document.getElementById('net-manual-in');if(!inp||!inp.value.trim()){IO.notify('Paste offer first','error');return}var data=_decodeOffer(inp.value.trim());if(!data||!data.sdp){IO.notify('Invalid offer','error');return}if(_manualPC)_manualPC.close();_manualPC=new RTCPeerConnection(_manualIceConfig());_manualPC.ondatachannel=function(e){var ch=e.channel;ch.onopen=function(){IO.notify('Connected!')};ch.onmessage=function(ev){try{handleNetMsg(JSON.parse(ev.data),'manual')}catch(err){}}};var candidates=[],done=false;function finish(){if(done)return;done=true;_finishManualGather(_manualPC,candidates,'Answer','net-manual-out')}_manualPC.onicecandidate=function(e){if(!e.candidate){finish();return}candidates.push(e.candidate)};_manualPC.onicegatheringstatechange=function(){if(_manualPC.iceGatheringState==='complete')finish()};_manualPC.setRemoteDescription(data.sdp).then(function(){(data.candidates||[]).forEach(function(c){_manualPC.addIceCandidate(c).catch(function(){})});return _manualPC.createAnswer()}).then(function(a){return _manualPC.setLocalDescription(a)}).then(function(){setTimeout(finish,5000)}).catch(function(e){IO.notify('Answer error: '+e.message,'error')});IO.notify('Generating answer…');}
+function netManualApply(){var inp=document.getElementById('net-manual-in2');if(!inp||!inp.value.trim()){IO.notify('Paste answer first','error');return}if(!_manualPC){IO.notify('Generate offer first','error');return}var data=_decodeOffer(inp.value.trim());if(!data||!data.sdp){IO.notify('Invalid answer','error');return}_manualPC.setRemoteDescription(data.sdp).then(function(){(data.candidates||[]).forEach(function(c){_manualPC.addIceCandidate(c).catch(function(){})});IO.notify('Applied — waiting for connection…')}).catch(function(e){IO.notify('Apply error: '+e.message,'error')});}
+function netManualCopy(){var el=document.getElementById('net-manual-out');if(!el||!el.value){IO.notify('Nothing to copy','error');return}if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(el.value).then(function(){IO.notify('Copied!')}).catch(function(){el.select();document.execCommand('copy')});else{el.select();document.execCommand('copy');IO.notify('Copied!')}}
+function netManualToggle(){var el=document.getElementById('net-manual');if(el)el.style.display=el.style.display==='none'?'block':'none';}
+function netDiag(){var out=document.getElementById('net-diag-out');if(!out)return;out.textContent='Testing…';var pc2=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});var types={};var t=setTimeout(function(){pc2.close();var parts=Object.keys(types).map(function(k){return k+' ✓'});out.textContent=parts.length?parts.join(' | '):'All servers blocked — use Manual Connect';},6000);pc2.onicecandidate=function(e){if(!e.candidate)return;var tp=e.candidate.type;if(tp)types[tp]=1};pc2.createDataChannel('d');pc2.createOffer().then(function(o){return pc2.setLocalDescription(o)}).catch(function(){out.textContent='Diagnostic failed';});}
 
 function handleNetMsg(msg,fromPeer){
   /* Host: validate & relay edit messages to other peers */
@@ -3551,9 +3285,9 @@ const IO={
     const inp=document.createElement("input");inp.type="file";inp.accept=".tacmap,.geojson,.kml,.kmz,.milx,.milxly,.milxlyz,.json";inp.style.cssText="position:fixed;top:-9999px;left:-9999px;opacity:0";inp.onchange=e=>{const f=e.target.files[0];if(inp.parentNode)inp.parentNode.removeChild(inp);if(!f)return;const ext=f.name.split(".").pop().toLowerCase();if(ext==="kmz"||ext==="milxlyz"){f.arrayBuffer().then(buf=>{if(ext==="milxlyz")IO.importMilXZ(buf);else IO.importKMZ(buf)}).catch(e=>IO.notify("Import error: "+e.message,"error"));return}const reader=new FileReader();reader.onload=ev=>{if(ext==="tacmap"||ext==="json")IO.projectLoad(ev.target.result);else if(ext==="geojson")IO.importGeoJSON(ev.target.result);else if(ext==="kml")IO.importKML(ev.target.result);else if(ext==="milx"||ext==="milxly")IO.importMilX(ev.target.result);else IO.notify("Unsupported file type","error")};reader.readAsText(f)};document.body.appendChild(inp);inp.click()},
   importGeoJSON(text){try{const fc=JSON.parse(text);let errors=0;const importLayerId="l"+Date.now();S.layers.push({id:importLayerId,name:"Import: GeoJSON",visible:true,hasErrors:false});S.activeLayerId=importLayerId;if(fc.features)fc.features.slice(0,2000).forEach(f=>{if(f.geometry&&f.geometry.type==="Point"){const[lon,lat]=f.geometry.coordinates;const p=f.properties||{};if(isNaN(lat)||isNaN(lon)){errors++;return}const nu={id:"u"+Date.now()+Math.random().toString(36).substr(2,4),lat,lon,type:p.type||"infantry",affiliation:p.affiliation||"friendly",echelon:p.echelon||null,designation:sanitizeStr(p.designation||p.name||"",INPUT_LIMITS.designation),modifiers:[],isHQ:false,layerId:importLayerId,rings:[],equipment:{}};if(sanitizeUnit(nu))S.units.push(nu)}else{errors++}});if(errors>0){const il=S.layers.find(x=>x.id===importLayerId);if(il)il.hasErrors=true}requestRender();updateLayerIndicator();renderFloatingPanel();IO.notify("Imported "+(fc.features?Math.min(fc.features.length,2000)-errors:0)+" features"+(errors?" ("+errors+" skipped)":""))}catch(e){IO.notify("GeoJSON error: "+e.message,"error")}},
   importMilX(text){
-    /* map.army MilX format (.milxly plain XML, .milxlyz = ZIP containing .milxly)
-       Real V3.1 structure:
-         <MilXDocument_Layer xmlns="http://gs-soft.com/MilX/V3.1">
+    /* MilX / map.army format (.milxly uncompressed, .milxlyz = ZIP of .milxly)
+       Real structure from map.army V3.1:
+         <MilXDocument_Layer>
            <MilXLayer>
              <n>Layer Name</n>
              <GraphicList>
@@ -3564,16 +3298,25 @@ const IO={
                  </PointList>
                </MilXGraphic>
              </GraphicList>
+             <CoordSystemType>WGS84</CoordSystemType>
            </MilXLayer>
          </MilXDocument_Layer>
-       SIDC[1]: F/G=friendly H/J/K=hostile N=neutral U/P/W=unknown
-       SIDC[0]: S=unit symbol  G=tactical graphic
-       Single-point = unit, multi-point = tactical graphic */
+       SIDC char[1]: F/G=friendly H/J/K=hostile N=neutral U/P/W=unknown
+       Single-point graphics = unit symbols
+       Multi-point graphics = tactical graphics (lines, areas) */
     try{
-      var parser=new DOMParser(),doc=parser.parseFromString(text,"text/xml");
+      const parser=new DOMParser(),doc=parser.parseFromString(text,"text/xml");
       if(doc.querySelector("parsererror"))throw new Error("Invalid MilX XML");
-      function getChildText(el,tag){for(var i=0;i<el.children.length;i++){if(el.children[i].tagName===tag)return el.children[i].textContent.trim()}return""}
-      function extractSIDC(mssXml){var m=(mssXml||"").match(/ID=["']([^"']+)["']/);return m?m[1]:""}
+      function getDirectText(el,tag){
+        /* Only direct children, not deep descendants */
+        for(var i=0;i<el.children.length;i++){if(el.children[i].tagName===tag)return el.children[i].textContent.trim()}return""
+      }
+      function extractSIDC(mssXml){
+        /* MssStringXML contains HTML-escaped XML like: <Symbol ID="SHGPUCIL-------"/> */
+        if(!mssXml)return"";
+        var m=mssXml.match(/ID=["']([^"']+)["']/);
+        return m?m[1]:"";
+      }
       function sidcToAff(sidc){
         if(!sidc||sidc.length<2)return"friendly";
         var ch=(sidc[1]||"").toUpperCase();
@@ -3583,82 +3326,108 @@ const IO={
         return"friendly";
       }
       function sidcToType(sidc){
+        /* Letter SIDC 2525C: pos 0=affiliation set, 4-9=function ID
+           G prefix = tactical graphic (not a unit) */
         if(!sidc)return"infantry";
-        if((sidc[0]||"").toUpperCase()==="G")return"_tacgraphic";
+        if(sidc[0]==="G"||sidc[0]==="g")return"_tacgraphic";/* tactical graphic */
         var fn=(sidc.substring(4,10)||"").toUpperCase().replace(/-/g,"");
-        var tbl={UCIL:"infantry",UCIA:"airborne",UCIM:"mechanized",UCIZ:"mechanized",
-                 UCIS:"stryker",UCIR:"recon",UCI:"infantry",UC:"infantry",
-                 UA:"armor",UAC:"armor",UAR:"recon",UD:"aviation",UDA:"aviation",
-                 UE:"engineer",UFA:"artillery",UFC:"mortar",UFB:"air-defense",
-                 UFD:"antitank",UF:"artillery",UHS:"medical",UH:"medical",
-                 USS:"supply",USC:"signal"};
+        var tbl={
+          UCIL:"infantry",UCI:"infantry",UC:"infantry",
+          UCIA:"airborne",UCIB:"airborne",
+          UCIZ:"mechanized",UCIM:"mechanized",
+          UCIS:"stryker",UCIR:"recon",
+          UA:"armor",UAR:"recon",UAC:"armor",
+          UCD:"armor",
+          UD:"aviation",UDA:"attack-helicopter",
+          UE:"engineer",
+          UF:"artillery",UFAA:"artillery",UFA:"artillery",
+          UFC:"mortar",UFB:"air-defense",
+          UFD:"antitank",
+          UH:"medical",UHS:"medical",
+          USS:"supply",USX:"maintenance",
+          USC:"signal",
+          USM:"signal"
+        };
+        /* Try progressively shorter prefixes */
         for(var l=6;l>=2;l--){var k=fn.substring(0,l);if(tbl[k])return tbl[k]}
         return"infantry";
       }
       function sidcToEchelon(sidc){
+        /* Echelon at position 11 in 15-char letter SIDC */
         if(!sidc||sidc.length<12)return null;
-        return{A:"team",B:"squad",C:"section",D:"platoon",E:"company",F:"battalion",
-               G:"regiment",H:"brigade",I:"division",J:"corps",K:"army"}[sidc[11].toUpperCase()]||null;
+        var ch=sidc[11].toUpperCase();
+        var map={A:"team",B:"squad",C:"section",D:"platoon",E:"company",
+                 F:"battalion",G:"regiment",H:"brigade",I:"division",J:"corps",K:"army"};
+        return map[ch]||null;
       }
+      /* Color mapping for tactical graphics affiliation */
+      var TACGFX_COLORS={H:"#ff4444",J:"#ff4444",K:"#ff4444",N:"#00cc00",F:"#4a9eff",G:"#4a9eff",U:"#ffff00",P:"#ffff00"};
       function sidcToColor(sidc){
-        var ch=(sidc&&sidc[1]||"").toUpperCase();
-        if(ch==="H"||ch==="J"||ch==="K")return"#ff4444";
-        if(ch==="N")return"#00cc44";
-        if(ch==="U"||ch==="P"||ch==="W")return"#ffff00";
-        return"#4a9eff";
+        if(!sidc)return"#f44";
+        return TACGFX_COLORS[(sidc[1]||"").toUpperCase()]||"#f44";
       }
       var mlayers=doc.getElementsByTagName("MilXLayer");
       if(mlayers.length===0)throw new Error("No MilXLayer elements found");
       var count=0,errors=0,importedLayerIds=[],pkgLayerIds=[];
-      var docName=getChildText(doc.documentElement,"n")||"MilX Import";
+      var docName=getDirectText(doc.documentElement,"n")||"MilX Import";
       for(var li=0;li<mlayers.length;li++){
         var layer=mlayers[li];
-        var lname=getChildText(layer,"n")||("Layer "+(li+1));
+        var lname=getDirectText(layer,"n")||("Layer "+(li+1));
         var layerId="l"+Date.now()+Math.random().toString(36).substr(2,4);
         S.layers.push({id:layerId,name:sanitizeStr(lname,INPUT_LIMITS.layerName||64),visible:true,hasErrors:false,collapsed:true});
         var graphics=layer.getElementsByTagName("MilXGraphic");
         var layerImported=0,layerErrors=0;
         for(var gi=0;gi<graphics.length;gi++){
           var gfx=graphics[gi];
-          var mssRaw=getChildText(gfx,"MssStringXML");
+          var mssRaw=getDirectText(gfx,"MssStringXML");
           var sidc=extractSIDC(mssRaw);
+          /* Collect points */
           var ptEls=gfx.querySelectorAll("PointList > Point");
           if(ptEls.length===0){layerErrors++;errors++;continue}
           var points=[];
           for(var pi=0;pi<ptEls.length;pi++){
             var xe=ptEls[pi].querySelector("X"),ye=ptEls[pi].querySelector("Y");
-            if(!xe||!ye)continue;
-            var lon2=parseFloat(xe.textContent),lat2=parseFloat(ye.textContent);
-            if(!isNaN(lat2)&&!isNaN(lon2))points.push({lat:lat2,lon:lon2});
+            if(!xe||!ye){continue}
+            var lon=parseFloat(xe.textContent),lat=parseFloat(ye.textContent);
+            if(isNaN(lat)||isNaN(lon)){continue}
+            points.push({lat,lon});
           }
           if(points.length===0){layerErrors++;errors++;continue}
           var type=sidcToType(sidc);
+          var aff=sidcToAff(sidc);
           if(type==="_tacgraphic"||points.length>1){
-            /* Tactical graphic → import as drawable graphic */
+            /* Multi-point or tactical graphic symbol — import as graphic */
             var tool=points.length===1?"circle":points.length===2?"line":"polygon";
+            /* Refine tool by SIDC category */
+            if(sidc&&sidc[0]==="G"){
+              var cat=(sidc[2]||"").toUpperCase();
+              /* T=task, M=mobility/obstacle, F=fire support, O=other */
+              if(points.length===2)tool="line";
+              else if(points.length>=3)tool="polygon";
+              else tool="circle";
+            }
             var col=sidcToColor(sidc);
             var g={id:"g"+Date.now()+Math.random().toString(36).substr(2,4),
-              tool:tool,points:points,color:col,lineWidth:2,lineStyle:"solid",
+              tool,points,color:col,lineWidth:2,lineStyle:"solid",
               overlayType:"none",fill:tool==="polygon",fillColor:col,fillOpacity:0.15,
-              label:"",layerId:layerId,arrowSize:1,rotation:0};
+              label:"",layerId,arrowSize:1,rotation:0};
             S.graphics.push(g);count++;layerImported++;
           }else{
-            /* Unit symbol */
+            /* Single-point unit symbol */
             var nu={id:"u"+Date.now()+Math.random().toString(36).substr(2,4),
-              lat:points[0].lat,lon:points[0].lon,type:type,affiliation:sidcToAff(sidc),
+              lat:points[0].lat,lon:points[0].lon,
+              type,affiliation:aff,
               echelon:sidcToEchelon(sidc),
               designation:sanitizeStr("",INPUT_LIMITS.designation||32),
-              modifiers:[],isHQ:false,layerId:layerId,rings:[],equipment:{},sidc:sidc};
+              modifiers:[],isHQ:false,layerId,rings:[],equipment:{},sidc};
             if(sanitizeUnit(nu)){S.units.push(nu);count++;layerImported++}
             else{layerErrors++;errors++}
           }
         }
         if(layerImported>0){
           importedLayerIds.push(layerId);pkgLayerIds.push(layerId);
-          if(layerErrors>0){var errLayer=S.layers.find(function(x){return x.id===layerId});if(errLayer)errLayer.hasErrors=true}
-        }else{
-          S.layers=S.layers.filter(function(l){return l.id!==layerId});
-        }
+          if(layerErrors>0){var el=S.layers.find(x=>x.id===layerId);if(el)el.hasErrors=true}
+        }else{S.layers=S.layers.filter(l=>l.id!==layerId)}
       }
       if(pkgLayerIds.length>1){
         S.packages.push({id:"pkg"+Date.now(),name:docName,collapsed:false,layerIds:pkgLayerIds});
@@ -3668,41 +3437,63 @@ const IO={
       IO.notify("Imported "+count+" MilX objects"+(errors?" ("+errors+" skipped)":""))
     }catch(e){IO.notify("MilX error: "+e.message,"error")}},
   importMilXZ(buf){
-    /* Decompress .milxlyz (ZIP) then call importMilX on inner .milxly XML.
-       Uses DecompressionStream (modern browsers) for deflate-raw entries. */
+    /* Decompress .milxlyz (ZIP) then call importMilX on the inner .milxly XML */
     try{
-      var dv=new DataView(buf),i=0,found=false;
-      function tryEntry(){
-        while(i<buf.byteLength-30){
-          if(dv.getUint32(i,true)!==0x04034b50){i++;continue}
-          var comp=dv.getUint16(i+8,true);
-          var csize=dv.getUint32(i+18,true);
-          var usize=dv.getUint32(i+22,true);
-          var fnlen=dv.getUint16(i+26,true);
-          var exlen=dv.getUint16(i+28,true);
-          var fname=new TextDecoder().decode(new Uint8Array(buf,i+30,fnlen));
-          var dataStart=i+30+fnlen+exlen;
-          if(fname.endsWith(".milxly")){
-            found=true;
-            if(comp===0){
-              IO.importMilX(new TextDecoder().decode(new Uint8Array(buf,dataStart,usize)));return;
-            }else if(comp===8&&typeof DecompressionStream!=="undefined"){
-              var raw=new Uint8Array(buf,dataStart,csize);
+      var JSZip=window.JSZip;
+      if(typeof JSZip==="undefined"){
+        /* Inline ZIP reader using browser's DecompressionStream if available, else fflate */
+        IO._unzipFirst(buf,function(xmlText){IO.importMilX(xmlText)});return;
+      }
+      JSZip.loadAsync(buf).then(function(zip){
+        var entries=Object.keys(zip.files).filter(n=>n.endsWith(".milxly"));
+        if(!entries.length){IO.notify("No .milxly in archive","error");return}
+        zip.files[entries[0]].async("string").then(function(txt){IO.importMilX(txt)});
+      }).catch(function(e){IO.notify("MilX zip error: "+e.message,"error")});
+    }catch(e){IO.notify("MilXZ error: "+e.message,"error")}},
+  _unzipFirst(buf,cb){
+    /* Use fflate (bundled in app) or fall back to manual ZIP parse */
+    if(typeof fflate!=="undefined"){
+      try{
+        var u=new fflate.Unzip();var found=false;
+        u.register(fflate.UnzipInflate);
+        u.onfile=function(f){
+          if(!found&&f.name.endsWith(".milxly")){found=true;var chunks=[];
+            f.ondata=function(err,chunk,final){if(!err)chunks.push(chunk);if(final){var merged=new Uint8Array(chunks.reduce((s,c)=>s+c.length,0));var off=0;chunks.forEach(c=>{merged.set(c,off);off+=c.length});cb(new TextDecoder().decode(merged))}};f.start()}};
+        u.push(new Uint8Array(buf),true);return;
+      }catch(e){}
+    }
+    /* Manual PKZIP local file header parse — works for stored/deflate entries */
+    try{
+      var dv=new DataView(buf),i=0;
+      while(i<buf.byteLength-30){
+        if(dv.getUint32(i,true)!==0x04034b50){i++;continue}
+        var flags=dv.getUint16(i+6,true);
+        var comp=dv.getUint16(i+8,true);
+        var csize=dv.getUint32(i+18,true);
+        var usize=dv.getUint32(i+22,true);
+        var fnlen=dv.getUint16(i+26,true);
+        var exlen=dv.getUint16(i+28,true);
+        var fname=new TextDecoder().decode(new Uint8Array(buf,i+30,fnlen));
+        var dataStart=i+30+fnlen+exlen;
+        if(fname.endsWith(".milxly")){
+          if(comp===0){/* stored */
+            cb(new TextDecoder().decode(new Uint8Array(buf,dataStart,usize)));return;
+          }else if(comp===8){/* deflate */
+            var raw=new Uint8Array(buf,dataStart,csize);
+            if(typeof DecompressionStream!=="undefined"){
               var ds=new DecompressionStream("deflate-raw");
-              var w=ds.writable.getWriter(),r=ds.readable.getReader(),chunks=[];
-              function pump(){r.read().then(function(res){
-                if(res.done){var m=new Uint8Array(chunks.reduce(function(s,c){return s+c.length},0));var off=0;chunks.forEach(function(c){m.set(c,off);off+=c.length});IO.importMilX(new TextDecoder().decode(m))}
-                else{chunks.push(res.value);pump()}
-              })}
-              pump();w.write(raw);w.close();return;
+              var writer=ds.writable.getWriter();
+              var reader=ds.readable.getReader();
+              var chunks=[];
+              function pump(){reader.read().then(function(r){if(r.done){var m=new Uint8Array(chunks.reduce((s,c)=>s+c.length,0));var off=0;chunks.forEach(c=>{m.set(c,off);off+=c.length});cb(new TextDecoder().decode(m))}else{chunks.push(r.value);pump()}})}
+              pump();writer.write(raw);writer.close();return;
             }
           }
-          i=dataStart+(csize||usize||1);
         }
-        if(!found)IO.notify("No .milxly found in archive","error");
+        i=dataStart+Math.max(csize,usize||0)||i+1;
       }
-      tryEntry();
-    }catch(e){IO.notify("MilXZ error: "+e.message,"error")}},
+      IO.notify("Could not extract .milxly from archive","error");
+    }catch(e){IO.notify("ZIP parse error: "+e.message,"error")}},
   importKML(text,embeddedFiles){try{const parser=new DOMParser(),doc=parser.parseFromString(text,"text/xml");
     let count=0,errors=0;const _embeddedFiles=embeddedFiles||{};
     /* Affiliation detection from name, description, or style */
@@ -3840,37 +3631,19 @@ const IO={
       var gc="#000000",lc=extractKmlColor(st,["LineStyle"]);if(lc)gc=lc.hex;else{var pc=extractKmlColor(st,["PolyStyle","IconStyle"]);if(pc)gc=pc.hex}
       var glw=extractKmlLineWidth(st)||2,sf=isPoly,gfc=gc,gfo=0.15;
       if(st){var ps=st.getElementsByTagName("PolyStyle");if(ps.length>0){var ft=ps[0].getElementsByTagName("fill")[0];if(ft&&(ft.textContent.trim()==="false"||ft.textContent.trim()==="0"))sf=false;var fc=extractKmlColor(st,["PolyStyle"]);if(fc){gfc=fc.hex;if(fc.a===0)sf=false;var ko=extractKmlFillOpacity(st);if(ko!==null&&ko>0)gfo=Math.min(ko,0.8)}}}
-      var _smEd={};var _eds=pm.querySelectorAll("ExtendedData > Data");for(var _i=0;_i<_eds.length;_i++){var _k=_eds[_i].getAttribute("name");var _v=(_eds[_i].querySelector("value")||{}).textContent||"";if(_k&&_k.startsWith("sm:"))_smEd[_k.slice(3)]=_v}var ln=(rn+" "+rd).toLowerCase(),ot=_smEd.overlayType||"none",gt=_smEd.tool||(isPoly?"polygon":"line");
+      var _smEd={};pm.querySelectorAll("ExtendedData > Data").forEach(function(d){var k=d.getAttribute("name");var v=(d.querySelector("value")||{}).textContent||"";if(k&&k.startsWith("sm:"))_smEd[k.slice(3)]=v});var ln=(rn+" "+rd).toLowerCase(),ot=_smEd.overlayType||"none",gt=_smEd.tool||(isPoly?"polygon":"line");
       if(/\bao\b|area\s*of\s*op|area\s*of\s*interest/i.test(ln)){ot="none";gt="polygon"}
       else if(/\bpl\b|phase\s*line/i.test(ln)){ot="pl";gt="line"}else if(/\bld\b|line\s*of\s*dep/i.test(ln)){ot="ld";gt="line"}
       else if(/\bboundary\b/i.test(ln)){ot="boundary";gt="line"}else if(/\baa\b|assembly\s*area/i.test(ln)){ot="aa";gt="rectangle"}
       else if(/\baxis\b|avenue.*approach/i.test(ln)){ot="axis";gt="line"}else if(/\broute\b|msr\b|asr\b/i.test(ln)){ot="route";gt="line"}
-      return{_isGraphic:true,id:"g"+Date.now()+Math.random().toString(36).substr(2,4),tool:gt,points:pts,color:gc,lineWidth:glw,lineStyle:_smEd.lineStyle||'solid',overlayType:ot,fill:sf,fillColor:gfc,fillOpacity:gfo,label:_smEd.label!==undefined?_smEd.label:(rn&&!/^Untitled (Polygon|Path|Linestring|Placemark|Line)$/i.test(rn)?rn:""),layerId:lid,labelOffset:null,echelon:ot==="boundary"?"brigade":null,unitAbove:"",unitBelow:""}}
+      return{_isGraphic:true,id:"g"+Date.now()+Math.random().toString(36).substr(2,4),tool:gt,points:pts,color:gc,lineWidth:glw,lineStyle:_smEd.lineStyle||'solid',overlayType:ot,fill:sf,fillColor:gfc,fillOpacity:gfo,label:rn&&!/^Untitled (Polygon|Path|Linestring|Placemark|Line)$/i.test(rn)?rn:"",layerId:lid,labelOffset:null,echelon:ot==="boundary"?"brigade":null,unitAbove:"",unitBelow:""}}
     function buildUnit(pm,layerId,folderName){
       const coords=pm.getElementsByTagName("coordinates")[0];if(!coords)return null;
       const nameEl=pm.getElementsByTagName("name")[0],descEl=pm.getElementsByTagName("description")[0];
       const rawName=nameEl?nameEl.textContent:"",rawDesc=descEl?descEl.textContent:"";
-      /* Check for ScheffMap ExtendedData — if present, use it directly (round-trip fidelity) */
-      var smData={};
-      var edNodes=pm.querySelectorAll("ExtendedData > Data");
-      edNodes.forEach(function(d){var k=d.getAttribute("name");var v=(d.querySelector("value")||{}).textContent||"";if(k&&k.startsWith("sm:"))smData[k.slice(3)]=v});
-      if(smData.type){
-        /* Full metadata preserved — reconstruct unit directly */
-        var smMods=[];try{smMods=JSON.parse(smData.modifiers||"[]")}catch(e){}
-        return{id:"u"+Date.now()+Math.random().toString(36).substr(2,4),
-          lat:parseFloat(coords.textContent.split(",")[1]),
-          lon:parseFloat(coords.textContent.split(",")[0]),
-          type:smData.type||"infantry",
-          affiliation:smData.affiliation||"friendly",
-          echelon:smData.echelon||null,
-          designation:sanitizeStr(rawName,INPUT_LIMITS.designation),
-          parentUnit:sanitizeStr(smData.parentUnit||"",INPUT_LIMITS.parentUnit||32),
-          higherUnit:sanitizeStr(smData.higherUnit||"",INPUT_LIMITS.parentUnit||32),
-          isHQ:smData.isHQ==="true",
-          modifiers:smMods,
-          layerId,rings:[],equipment:{},
-          importNotes:"",originalName:rawName,_useStructuredLabel:true};
-      }
+      var smData={};pm.querySelectorAll("ExtendedData > Data").forEach(function(d){var k=d.getAttribute("name");var v=(d.querySelector("value")||{}).textContent||"";if(k&&k.startsWith("sm:"))smData[k.slice(3)]=v});
+      if(smData.type){var smMods=[];try{smMods=JSON.parse(smData.modifiers||"[]")}catch(e){}
+        return{id:"u"+Date.now()+Math.random().toString(36).substr(2,4),lat:parseFloat(coords.textContent.split(",")[1]),lon:parseFloat(coords.textContent.split(",")[0]),type:smData.type||"infantry",affiliation:smData.affiliation||"friendly",echelon:smData.echelon||null,designation:sanitizeStr(rawName,INPUT_LIMITS.designation),parentUnit:sanitizeStr(smData.parentUnit||"",INPUT_LIMITS.parentUnit||32),higherUnit:sanitizeStr(smData.higherUnit||"",INPUT_LIMITS.parentUnit||32),isHQ:smData.isHQ==="true",modifiers:smMods,layerId,rings:[],equipment:{},importNotes:"",originalName:rawName,_useStructuredLabel:true};}
       const aff=detectAff(pm,folderName);
       const mg=pm.getElementsByTagName("MultiGeometry")[0];
       if(mg){var st=resolveStyle(pm),ap=mg.getElementsByTagName("Polygon"),al=mg.getElementsByTagName("LineString");
@@ -4127,10 +3900,10 @@ const IO={
     });
     function placemarkUnit(u){var nm=esc(u.designation||u.originalName||u.type);var sid="u_"+(u.id||"").replace(/[^a-zA-Z0-9]/g,"");var ext='<ExtendedData><Data name="sm:type"><value>'+esc(u.type||'')+'</value></Data><Data name="sm:affiliation"><value>'+esc(u.affiliation||'friendly')+'</value></Data><Data name="sm:echelon"><value>'+esc(u.echelon||'')+'</value></Data><Data name="sm:higherUnit"><value>'+esc(u.higherUnit||'')+'</value></Data><Data name="sm:parentUnit"><value>'+esc(u.parentUnit||'')+'</value></Data><Data name="sm:isHQ"><value>'+(u.isHQ?'true':'false')+'</value></Data><Data name="sm:modifiers"><value>'+esc(JSON.stringify(u.modifiers||[]))+'</value></Data></ExtendedData>';return'<Placemark><name>'+nm+'</name><styleUrl>#'+sid+'</styleUrl>'+ext+'<Point><coordinates>'+u.lon+','+u.lat+',0</coordinates></Point></Placemark>\n'}
     function placemarkGfx(g){
-      var nm=esc(g.label||"");/* never fall back to tool/overlayType — empty label = empty name */
+      var nm=esc(g.label||"");
       var sid="g_"+(g.id||"").replace(/[^a-zA-Z0-9]/g,"");
-      var gExt='<ExtendedData><Data name="sm:lineStyle"><value>'+(g.lineStyle||'solid')+'</value></Data><Data name="sm:tool"><value>'+(g.tool||'line')+'</value></Data><Data name="sm:rotation"><value>'+(g.rotation||0)+'</value></Data><Data name="sm:overlayType"><value>'+(g.overlayType||'none')+'</value></Data><Data name="sm:label"><value>'+esc(g.label||'')+'</value></Data></ExtendedData>';
-      var h='<Placemark><n>'+nm+'</n><styleUrl>#'+sid+'</styleUrl>'+gExt;
+      var gExt='<ExtendedData><Data name="sm:lineStyle"><value>'+(g.lineStyle||'solid')+'</value></Data><Data name="sm:tool"><value>'+(g.tool||'line')+'</value></Data><Data name="sm:overlayType"><value>'+(g.overlayType||'none')+'</value></Data><Data name="sm:label"><value>'+esc(g.label||'')+'</value></Data></ExtendedData>';
+      var h='<Placemark><name>'+nm+'</name><styleUrl>#'+sid+'</styleUrl>'+gExt;
       if(g.tool==="rectangle"&&g.points.length===2){h+='<Polygon><outerBoundaryIs><LinearRing><coordinates>'+rectToCoords(g)+'</coordinates></LinearRing></outerBoundaryIs></Polygon>';}
       else if(g.tool==="circle"&&g.points.length>=2){h+='<Polygon><outerBoundaryIs><LinearRing><coordinates>'+circleToCoords(g)+'</coordinates></LinearRing></outerBoundaryIs></Polygon>';}
       else if(g.tool==="polygon"){var c=g.points.map(p=>p.lon+","+p.lat+",0").join(" ");h+='<Polygon><outerBoundaryIs><LinearRing><coordinates>'+c+" "+g.points[0].lon+","+g.points[0].lat+',0</coordinates></LinearRing></outerBoundaryIs></Polygon>';}
@@ -4171,11 +3944,12 @@ const IO={
     var hexToKml=function(hex,alpha){hex=(hex||"#ff4444").replace("#","");var r=hex.substring(0,2),g2=hex.substring(2,4),b=hex.substring(4,6);var a=alpha!==undefined?Math.round(alpha*255).toString(16).padStart(2,"0"):"ff";return a+b+g2+r};
     function rectToCoords(g){var p0=g.points[0],p1=g.points[1];return[p0.lon+","+p0.lat+",0",p1.lon+","+p0.lat+",0",p1.lon+","+p1.lat+",0",p0.lon+","+p1.lat+",0",p0.lon+","+p0.lat+",0"].join(" ")}
     function circleToCoords(g){var c=g.points[0],e=g.points[1];var R=Math.sqrt(Math.pow((e.lat-c.lat),2)+Math.pow((e.lon-c.lon)*Math.cos(c.lat*Math.PI/180),2));var pts=[];for(var i=0;i<=64;i++){var a=Math.PI*2*i/64;pts.push((c.lon+R*Math.sin(a)/Math.cos(c.lat*Math.PI/180))+","+(c.lat+R*Math.cos(a))+",0")}return pts.join(" ")}
-    function placemarkUnit(u){var nm=esc(u.designation||u.originalName||u.type);var aff=u.affiliation||"friendly";var col=aff==="hostile"?"ff0000ff":aff==="neutral"?"ff00ff00":"ffff8800";var ext='<ExtendedData><Data name="sm:type"><value>'+esc(u.type||'')+'</value></Data><Data name="sm:affiliation"><value>'+esc(aff)+'</value></Data><Data name="sm:echelon"><value>'+esc(u.echelon||'')+'</value></Data><Data name="sm:higherUnit"><value>'+esc(u.higherUnit||'')+'</value></Data><Data name="sm:parentUnit"><value>'+esc(u.parentUnit||'')+'</value></Data><Data name="sm:isHQ"><value>'+(u.isHQ?'true':'false')+'</value></Data><Data name="sm:modifiers"><value>'+esc(JSON.stringify(u.modifiers||[]))+'</value></Data></ExtendedData>';return'<Placemark><name>'+nm+'</name><Style><IconStyle><scale>'+(u.iconScale||1)+'</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href></Icon><color>'+col+'</color></IconStyle></Style>'+ext+'<Point><coordinates>'+u.lon+','+u.lat+',0</coordinates></Point></Placemark>\n'}
+    function placemarkUnit(u){var nm=esc(u.designation||u.originalName||u.type);var aff=u.affiliation||"friendly";var col=aff==="hostile"?"ff0000ff":aff==="neutral"?"ff00ff00":"ffff8800";var ext='<ExtendedData><Data name="sm:type"><value>'+esc(u.type||'')+'</value></Data><Data name="sm:affiliation"><value>'+esc(u.affiliation||'friendly')+'</value></Data><Data name="sm:echelon"><value>'+esc(u.echelon||'')+'</value></Data><Data name="sm:higherUnit"><value>'+esc(u.higherUnit||'')+'</value></Data><Data name="sm:parentUnit"><value>'+esc(u.parentUnit||'')+'</value></Data><Data name="sm:isHQ"><value>'+(u.isHQ?'true':'false')+'</value></Data><Data name="sm:modifiers"><value>'+esc(JSON.stringify(u.modifiers||[]))+'</value></Data></ExtendedData>';return'<Placemark><name>'+nm+'</name><Style><IconStyle><scale>'+(u.iconScale||1)+'</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href></Icon><color>'+col+'</color></IconStyle></Style><Point><coordinates>'+u.lon+','+u.lat+',0</coordinates></Point></Placemark>\n'}
     function placemarkGfx(g){
-      var nm=esc(g.label||"");/* never fall back to tool/overlayType — empty label = empty name */
+      var nm=esc(g.label||"");
       var lineCol=hexToKml(g.color||"#ff4444",g.opacity!=null?g.opacity:1);var isP=g.tool==="polygon"||g.tool==="rectangle"||g.tool==="circle";
-      var smExt='<ExtendedData><Data name="sm:lineStyle"><value>'+(g.lineStyle||'solid')+'</value></Data><Data name="sm:tool"><value>'+(g.tool||'line')+'</value></Data><Data name="sm:rotation"><value>'+(g.rotation||0)+'</value></Data><Data name="sm:label"><value>'+esc(g.label||'')+'</value></Data></ExtendedData>';var h='<Placemark><n>'+nm+'</n>'+smExt+'<Style><LineStyle><color>'+lineCol+'</color><width>'+(g.lineWidth||2)+'</width></LineStyle>';
+      var gExt='<ExtendedData><Data name="sm:lineStyle"><value>'+(g.lineStyle||'solid')+'</value></Data><Data name="sm:tool"><value>'+(g.tool||'line')+'</value></Data><Data name="sm:overlayType"><value>'+(g.overlayType||'none')+'</value></Data><Data name="sm:label"><value>'+esc(g.label||'')+'</value></Data></ExtendedData>';
+      var h='<Placemark><name>'+nm+'</name><Style><LineStyle><color>'+lineCol+'</color><width>'+(g.lineWidth||2)+'</width></LineStyle>';
       if(isP&&g.fill){var fillOp=g.fillOpacity!=null?g.fillOpacity:0.35;h+='<PolyStyle><color>'+hexToKml(g.fillColor||g.color||"#ff4444",fillOp)+'</color></PolyStyle>';}
       else if(isP){h+='<PolyStyle><fill>0</fill></PolyStyle>';}
       h+='</Style>';
