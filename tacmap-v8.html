@@ -1227,6 +1227,28 @@ function renderComms(){
       h+='<label>Password</label><input type="password" id="net-turn-pass" value="'+escAttr(_ts.pass||'')+'" placeholder="staffmaps">';
       h+='<div style="display:flex;justify-content:flex-end;margin-top:4px"><button class="btn primary" onclick="S._commsStep=\'go\';renderFloatingPanel()">Next \u2192</button></div>';
 
+    } else if(_step==="diagApply"){
+      h+=_bk;
+      /* Config summary */
+      var _csOn=S._signalServer&&S._signalServer.host&&S._signalServer.host.trim();
+      var _ctOn=S._turnServer&&S._turnServer.host&&S._turnServer.host.trim();
+      h+='<div style="background:rgba(74,158,255,.08);border:1px solid rgba(74,158,255,.2);border-radius:6px;padding:8px;margin-bottom:12px;font-size:10px">';
+      h+='<div style="font-weight:600;margin-bottom:4px;font-size:11px">✅ Optimized Settings</div>';
+      h+='<div style="opacity:.8">Signal: '+(_csOn?escHtml(S._signalServer.host):'PeerJS Cloud')+'</div>';
+      h+='<div style="opacity:.8">TURN: '+(_ctOn?escHtml(S._turnServer.host)+':'+S._turnServer.port:'None')+'</div>';
+      h+='<div style="opacity:.8">STUN: Google + OpenRelay</div>';
+      h+='</div>';
+      /* Host / Join choice */
+      h+='<div style="display:flex;flex-direction:column;gap:8px">';
+      h+='<button class="btn primary" style="padding:14px;font-size:13px;font-weight:600" onclick="S._commsRole=\'host\';S._commsStep=\'go\';renderFloatingPanel()">\u25B6 Host a Room</button>';
+      h+='<button class="btn" style="padding:14px;font-size:13px;font-weight:600" onclick="S._commsRole=\'join\';S._commsStep=\'go\';renderFloatingPanel()">\u2192 Join a Room</button>';
+      h+='</div>';
+      /* Manual connect fallback link */
+      var rec=window._diagRec;
+      if(rec&&rec.method==='manual'){
+        h+='<div style="margin-top:10px;padding-top:8px;border-top:1px solid #333;font-size:11px;color:#e0a030">⚠️ Signal server unreachable — if room codes fail, use Manual Connect below.</div>';
+      }
+
     } else if(_step==="go"){
       h+=_bk;
       if(_ssOn){
@@ -1242,15 +1264,38 @@ function renderComms(){
         h+='<div style="font-size:11px;opacity:.7;margin-bottom:6px">Enter the 6-character room code from the host.</div>';
         h+='<div class="row" style="align-items:stretch"><input type="text" id="net-code" placeholder="Room code" maxlength="6" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="flex:2;margin-bottom:0"><button class="btn primary" onclick="netJoinRoom()" style="min-height:0;align-self:stretch">Join</button></div>';
       }
+      /* TURN server settings — collapsible */
+      var _hasTurn=S._turnServer&&S._turnServer.host&&S._turnServer.host.trim();
+      h+='<div style="margin-top:12px;border-top:1px solid #333;padding-top:8px">';
+      h+='<div style="font-size:11px;cursor:pointer;color:#aaa" onclick="S._showTurnSettings=!S._showTurnSettings;renderFloatingPanel()">'+(!S._showTurnSettings?'▶':'▼')+' TURN Relay'+(_hasTurn?' <span style="color:#40e060">(auto-configured)</span>':'')+'</div>';
+      if(S._showTurnSettings){
+        h+='<div style="font-size:10px;opacity:.6;margin:6px 0">Auto-configured with free public relay. Override below only if using your own TURN server.</div>';
+        h+='<label>Host</label><input type="text" id="net-turn-host" value="'+escAttr(_ts.host||'')+'" placeholder="e.g. 192.168.1.100 or turn.example.com">';
+        h+='<label>Port</label><input type="number" id="net-turn-port" value="'+(_ts.port||3478)+'" placeholder="3478">';
+        h+='<label>Username</label><input type="text" id="net-turn-user" value="'+escAttr(_ts.user||'')+'" placeholder="staffmaps">';
+        h+='<label>Password</label><input type="password" id="net-turn-pass" value="'+escAttr(_ts.pass||'')+'" placeholder="staffmaps">';
+        h+='<div style="display:flex;gap:6px;margin-top:4px">';
+        if(_hasTurn) h+='<button class="btn" style="font-size:10px;flex:1" onclick="S._turnServer=null;localStorage.removeItem(\'sm_turnServer\');renderFloatingPanel()">Clear</button>';
+        h+='<button class="btn" style="font-size:10px;flex:1" onclick="S._turnServer={host:\'openrelay.metered.ca\',port:443,user:\'openrelayproject\',pass:\'openrelayproject\'};localStorage.setItem(\'sm_turnServer\',JSON.stringify(S._turnServer));renderFloatingPanel();IO.notify(\'Reset to public relay\',\'success\')">Reset to Default</button>';
+        h+='</div>';
+      }
+      h+='</div>';
     }
   }
 
 else{
-    h+='<div style="font-size:11px;margin-bottom:6px">Room: <strong>'+(n.roomCode||"---")+'</strong> <button class="btn" onclick="navigator.clipboard.writeText(\''+(n.roomCode||"")+'\')" style="padding:1px 4px;font-size:9px">Copy</button></div>';
+    /* Room code hero display */
+    var _rc=n.roomCode||"---";
+    h+='<div style="background:rgba(74,158,255,.1);border:1px solid rgba(74,158,255,.3);border-radius:8px;padding:12px;margin-bottom:10px;text-align:center">';
+    if(n.isHost){
+      h+='<div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;opacity:.6;margin-bottom:4px">Share this code with joiners</div>';
+    }
+    h+='<div style="font-size:28px;font-weight:700;letter-spacing:6px;font-family:monospace;color:#4a9eff;margin-bottom:6px;user-select:all">'+escHtml(_rc)+'</div>';
+    h+='<button class="btn primary" onclick="navigator.clipboard.writeText(\''+escAttr(_rc)+'\').then(function(){IO.notify(\'Room code copied!\',\'success\')}).catch(function(){})" style="padding:6px 16px;font-size:11px">📋 Copy Room Code</button>';
+    h+='</div>';
     if(n.isHost){var _isPersist=!!n.persistentRoom;h+='<div class="toggle-row" style="margin-bottom:6px"><label class="switch"><input type="checkbox" id="net-persist-room"'+(_isPersist?' checked':'')+'><span class="slider"></span></label><span style="font-size:11px">Persistent room</span></div>';}
 
-    h+='<div style="font-size:11px;margin-bottom:6px">Mode: '+(n.isHost?"HOST":"PEER")+'</div>';
-    h+='<div style="font-size:11px;margin-bottom:6px">Status: '+n.status+'</div>';
+    h+='<div style="font-size:11px;margin-bottom:6px">Mode: '+(n.isHost?"HOST":"PEER")+' &nbsp;|&nbsp; Status: '+n.status+'</div>';
     if(n.isHost){
       h+='<div class="toggle-row"><span>Default Join: View Only</span><label class="switch"><input type="checkbox" id="net-djm"'+(n.defaultJoinMode==="view"?" checked":"")+'><span class="slider"></span></label></div>';
       /* Active edit requests — show as actionable notifications */
@@ -3220,7 +3265,7 @@ function netLeave(){const n=S._net;if(n.peer)n.peer.destroy();n.peer=null;n.conn
 
 var _manualPC=null,_manualPCs=[];
 function netManualRole(role){var h=document.getElementById('net-manual-host'),p=document.getElementById('net-manual-peer'),hb=document.getElementById('mr-host'),pb=document.getElementById('mr-peer');if(h)h.style.display=role==='host'?'block':'none';if(p)p.style.display=role==='peer'?'block':'none';if(hb)hb.className='btn'+(role==='host'?' primary':'');if(pb)pb.className='btn'+(role==='peer'?' primary':'');}
-function _manualIceConfig(){return{iceServers:[],iceCandidatePoolSize:10}}
+function _manualIceConfig(){return{iceServers:_buildIceServers(),iceCandidatePoolSize:10}}
 function _encodeOffer(obj){var out={t:obj.sdp.type,s:(obj.sdp.sdp||'').split('\n').filter(function(l){return l.trim()&&l.indexOf('a=extmap')!==0&&l!=='a=msid-semantic: WMS'}).join('\n')};return btoa(unescape(encodeURIComponent(JSON.stringify(out))));}
 function _decodeOffer(str){try{var raw=JSON.parse(decodeURIComponent(escape(atob(str))));if(raw.t&&raw.s)return{sdp:{type:raw.t,sdp:raw.s},candidates:[]};if(raw.sdp)return raw;}catch(e){}return null;}
 function _showQR(text,cid){var el=document.getElementById(cid);if(!el||typeof QRCode==='undefined')return;el.innerHTML='';try{new QRCode(el,{text:text,width:180,height:180,colorDark:'#fff',colorLight:'#111',correctLevel:QRCode.CorrectLevel.M})}catch(e){}}
@@ -3237,7 +3282,7 @@ function netDiag(){var out=document.getElementById('net-diag-out');if(!out)retur
   var finished=false;
   /* Hard timeout — never hang longer than 12 seconds */
   var hardTimeout=setTimeout(function(){if(finished)return;finished=true;
-    if(!results.stun)results.stun='blocked';if(!results.turn&&S._turnServer&&S._turnServer.host)results.turn='blocked';else if(!results.turn)results.turn='skipped';if(!results.peerjs)results.peerjs='blocked';
+    if(!results.stun)results.stun='blocked';if(!results.turn)results.turn=(S._turnServer&&S._turnServer.host&&S._turnServer.host.trim())?'blocked':'public_blocked';if(!results.peerjs)results.peerjs='blocked';
     done=total;checkDone()},12000);
   function checkDone(){
     done++;if(done<total)return;
@@ -3253,11 +3298,12 @@ function netDiag(){var out=document.getElementById('net-diag-out');if(!out)retur
     else if(results.stun==='partial') h+='<div style="color:#e0a030;margin-bottom:4px">⚠️ STUN partial — Local connections work, internet P2P may fail behind strict NAT</div>';
     else h+='<div style="color:#ff4444;margin-bottom:4px">❌ STUN blocked — Cannot reach Google STUN server</div>';
     /* TURN */
-    if(S._turnServer&&S._turnServer.host){
-      if(results.turn==='ok') h+='<div style="color:#40e060;margin-bottom:4px">✅ TURN relay available — Connections will work even behind strict firewalls</div>';
-      else h+='<div style="color:#ff4444;margin-bottom:4px">❌ TURN relay failed — Check your TURN server settings (host: '+escHtml(S._turnServer.host)+')</div>';
+    if(S._turnServer&&S._turnServer.host&&S._turnServer.host.trim()){
+      if(results.turn==='ok') h+='<div style="color:#40e060;margin-bottom:4px">✅ Custom TURN relay available ('+escHtml(S._turnServer.host)+')</div>';
+      else h+='<div style="color:#ff4444;margin-bottom:4px">❌ Custom TURN relay failed ('+escHtml(S._turnServer.host)+')</div>';
     }else{
-      if(results.stun!=='ok') h+='<div style="color:#e0a030;margin-bottom:4px">⚠️ No TURN server configured — Add one in Server Settings for firewall relay</div>';
+      if(results.turn==='public_ok') h+='<div style="color:#40e060;margin-bottom:4px">✅ Public TURN relay available — Firewall bypass enabled</div>';
+      else if(results.turn==='public_blocked') h+='<div style="color:#e0a030;margin-bottom:4px">⚠️ Public TURN relay blocked — Strict firewalls may prevent connections</div>';
     }
     /* PeerJS signaling */
     var _hasCS=S._signalServer&&S._signalServer.host&&S._signalServer.host.trim();
@@ -3271,23 +3317,37 @@ function netDiag(){var out=document.getElementById('net-diag-out');if(!out)retur
     /* Recommendations */
     h+='<div style="border-top:1px solid #333;margin-top:8px;padding-top:8px;font-weight:600;font-size:11px">Recommendation</div>';
     var _sigWorks=results.peerjs==='ok'||results._cloudOk;
-    if(_sigWorks&&(results.stun==='ok'||results.turn==='ok')){
-      h+='<div style="color:#40e060;margin-top:4px">🟢 <b>Ready to connect.</b> Use Create Room / Join Room.';
-      if(results.peerjs!=='ok'&&results._cloudOk) h+='<br><span style="font-size:10px;opacity:.8">Tip: Switch to Default Cloud in server settings for best results.</span>';
+    var _turnWorks=results.turn==='ok'||results.turn==='public_ok';
+    /* Determine best config */
+    var _rec={method:null,sigServer:null,note:''};
+    if(_sigWorks&&(results.stun==='ok'||_turnWorks)){
+      _rec.method='room';
+      if(results.peerjs==='ok') _rec.sigServer='current';
+      else if(results._cloudOk) _rec.sigServer='cloud';
+      h+='<div style="color:#40e060;margin-top:4px">🟢 <b>Ready to connect.</b>';
+      if(results.peerjs!=='ok'&&results._cloudOk){
+        _rec.note='Switch to Default Cloud';
+        h+='<br><span style="font-size:10px;opacity:.8">Will switch signal server to Default Cloud for best results.</span>';
+      }
       h+='</div>';
     }else if(_sigWorks&&results.stun==='partial'){
-      h+='<div style="color:#e0a030;margin-top:4px">🟡 <b>Room codes work, but P2P may fail</b> if both users are behind strict NAT/firewalls. Options:<br>';
-      h+='&nbsp;&nbsp;1. Configure a TURN server in Server Settings<br>';
-      h+='&nbsp;&nbsp;2. Use Manual Connect as fallback</div>';
-    }else if(results.peerjs!=='ok'&&(results.stun==='ok'||results.stun==='partial')){
-      h+='<div style="color:#e0a030;margin-top:4px">🟡 <b>Signal server blocked but WebRTC works.</b> Options:<br>';
-      h+='&nbsp;&nbsp;1. Set up a Custom Signal Server on your local network<br>';
-      h+='&nbsp;&nbsp;2. Use Manual Connect (copy/paste codes)</div>';
+      _rec.method='room';
+      if(results.peerjs==='ok') _rec.sigServer='current';
+      else if(results._cloudOk) _rec.sigServer='cloud';
+      _rec.note='P2P may need TURN relay';
+      h+='<div style="color:#e0a030;margin-top:4px">🟡 <b>Room codes work</b>, but direct P2P may fail behind strict NAT. Public TURN relay will handle fallback automatically.</div>';
+    }else if(!_sigWorks&&(results.stun==='ok'||results.stun==='partial')){
+      _rec.method='manual';
+      _rec.note='Signal server blocked — use Manual Connect';
+      h+='<div style="color:#e0a030;margin-top:4px">🟡 <b>Signal server blocked but WebRTC works.</b> Manual Connect will be used.</div>';
     }else{
-      h+='<div style="color:#ff4444;margin-top:4px">🔴 <b>Network is heavily restricted.</b><br>';
-      h+='&nbsp;&nbsp;→ Use <b>Manual Connect</b> below. Exchange offer/answer codes verbally or via text message.<br>';
-      h+='&nbsp;&nbsp;→ Both devices must be able to reach each other (same WiFi or VPN).</div>';
+      _rec.method='manual';
+      _rec.note='Network heavily restricted';
+      h+='<div style="color:#ff4444;margin-top:4px">🔴 <b>Network is heavily restricted.</b> Manual Connect with copy/paste codes is the only option.</div>';
     }
+    /* Apply Recommended Settings button */
+    window._diagRec=_rec;
+    h+='<button class="btn primary" style="width:100%;margin-top:8px;padding:10px;font-size:12px;font-weight:600" onclick="applyDiagRec()">✨ Apply Recommended Settings</button>';
     h+='</div>';
     out.innerHTML=h;
   }
@@ -3306,16 +3366,26 @@ function netDiag(){var out=document.getElementById('net-diag-out');if(!out)retur
       if(tp==='srflx'&&!stunDone){stunDone=true;clearTimeout(stunTimeout);pc2.close();results.stun='ok';checkDone()}};
     pc2.createDataChannel('diag');pc2.createOffer().then(function(o){return pc2.setLocalDescription(o)}).catch(function(){if(!stunDone){stunDone=true;results.stun='blocked';checkDone()}});
   }catch(e){results.stun='blocked';checkDone()}
-  /* Test 3: TURN relay (only if configured) */
-  if(S._turnServer&&S._turnServer.host){
+  /* Test 3: TURN relay */
+  if(S._turnServer&&S._turnServer.host&&S._turnServer.host.trim()){
+    /* Test custom TURN */
     try{
-      var pc3=new RTCPeerConnection({iceServers:[{urls:'turn:'+S._turnServer.host+':'+(S._turnServer.port||3478),username:S._turnServer.user||'staffmaps',credential:S._turnServer.pass||'staffmaps'}],iceTransportPolicy:'relay'});
+      var pc3=new RTCPeerConnection({iceServers:[{urls:'turn:'+S._turnServer.host.trim()+':'+(S._turnServer.port||3478),username:S._turnServer.user||'staffmaps',credential:S._turnServer.pass||'staffmaps'}],iceTransportPolicy:'relay'});
       var turnDone=false;
       var turnTimeout=setTimeout(function(){if(turnDone)return;turnDone=true;pc3.close();results.turn='blocked';checkDone()},8000);
       pc3.onicecandidate=function(e){if(!e||!e.candidate)return;if(e.candidate.type==='relay'&&!turnDone){turnDone=true;clearTimeout(turnTimeout);pc3.close();results.turn='ok';checkDone()}};
       pc3.createDataChannel('diag');pc3.createOffer().then(function(o){return pc3.setLocalDescription(o)}).catch(function(){if(!turnDone){turnDone=true;results.turn='blocked';checkDone()}});
     }catch(e){results.turn='blocked';checkDone()}
-  }else{results.turn='skipped';checkDone()}
+  }else{
+    /* Test public TURN relay (auto-included) */
+    try{
+      var pc3b=new RTCPeerConnection({iceServers:[{urls:'turn:openrelay.metered.ca:443',username:'openrelayproject',credential:'openrelayproject'}],iceTransportPolicy:'relay'});
+      var turnDone2=false;
+      var turnTimeout2=setTimeout(function(){if(turnDone2)return;turnDone2=true;pc3b.close();results.turn='public_blocked';checkDone()},8000);
+      pc3b.onicecandidate=function(e){if(!e||!e.candidate)return;if(e.candidate.type==='relay'&&!turnDone2){turnDone2=true;clearTimeout(turnTimeout2);pc3b.close();results.turn='public_ok';checkDone()}};
+      pc3b.createDataChannel('diag');pc3b.createOffer().then(function(o){return pc3b.setLocalDescription(o)}).catch(function(){if(!turnDone2){turnDone2=true;results.turn='public_blocked';checkDone()}});
+    }catch(e){results.turn='public_blocked';checkDone()}
+  }
   /* Test 4: PeerJS signaling server reachability */
   var _hasCustomSig=S._signalServer&&S._signalServer.host&&S._signalServer.host.trim();
   var sigHost,sigPort,sigSecure;
@@ -3331,6 +3401,29 @@ function netDiag(){var out=document.getElementById('net-diag-out');if(!out)retur
       fetch('https://0.peerjs.com:443/peerjs/id',{method:'GET',mode:'cors'}).then(function(r2){clearTimeout(fallTimer);results.peerjs='blocked';results._cloudOk=r2.ok;checkDone()}).catch(function(){clearTimeout(fallTimer);results.peerjs='blocked';results._cloudOk=false;checkDone()});
     }else{results.peerjs='blocked';checkDone()}
   });
+}
+
+function applyDiagRec(){
+  var rec=window._diagRec;if(!rec){IO.notify('Run diagnostics first','error');return}
+  /* Apply signal server config */
+  if(rec.sigServer==='cloud'){
+    S._signalServer=null;
+    localStorage.setItem('sm_signalServer',null);
+  }
+  /* Auto-populate TURN with best tested public relay if no custom configured */
+  if(!(S._turnServer&&S._turnServer.host&&S._turnServer.host.trim())){
+    S._turnServer={host:'openrelay.metered.ca',port:443,user:'openrelayproject',pass:'openrelayproject'};
+    localStorage.setItem('sm_turnServer',JSON.stringify(S._turnServer));
+  }
+  /* Navigate based on recommended method */
+  if(rec.method==='room'){
+    S._commsStep='diagApply';
+    IO.notify('✅ Settings optimized — choose Host or Join','success');
+  }else if(rec.method==='manual'){
+    S._commsStep='diagApply';
+    IO.notify('⚠️ Settings applied — use Manual Connect or try Host/Join','warning');
+  }
+  renderFloatingPanel();
 }
 
 function handleNetMsg(msg,fromPeer){
@@ -4357,15 +4450,31 @@ function onKeyDown(e){
 
 // ─── INIT ────────────────────────────────
 
+// ICE server config with auto-fallback TURN relays
+function _buildIceServers(){
+  var servers=[
+    {urls:"stun:stun.l.google.com:19302"},
+    {urls:"stun:openrelay.metered.ca:80"}
+  ];
+  /* User's custom TURN server — highest priority */
+  if(S._turnServer&&S._turnServer.host&&S._turnServer.host.trim()){
+    servers.push({urls:"turn:"+S._turnServer.host.trim()+":"+(S._turnServer.port||3478),username:S._turnServer.user||"staffmaps",credential:S._turnServer.pass||"staffmaps"});
+  }
+  /* Public TURN relays as automatic fallback — ports 80+443 bypass firewalls */
+  if(!S._disablePublicTurn){
+    servers.push(
+      {urls:"turn:openrelay.metered.ca:80",username:"openrelayproject",credential:"openrelayproject"},
+      {urls:"turn:openrelay.metered.ca:443",username:"openrelayproject",credential:"openrelayproject"},
+      {urls:"turn:openrelay.metered.ca:443?transport=tcp",username:"openrelayproject",credential:"openrelayproject"}
+    );
+  }
+  return servers;
+}
 // Signal server config
 function _peerOpts(){
   var ss=S._signalServer;
-  if(!ss||!ss.host)return{debug:0};
-  var iceServers=[{urls:"stun:stun.l.google.com:19302"}];
-  if(S._turnServer&&S._turnServer.host){
-    iceServers.push({urls:"turn:"+S._turnServer.host+":"+(S._turnServer.port||3478),username:S._turnServer.user||"staffmaps",credential:S._turnServer.pass||"staffmaps"});
-  }
-  return{debug:0,host:ss.host,port:ss.port||9000,path:"/peerjs",secure:!!ss.secure,config:{iceServers:iceServers}};
+  if(!ss||!ss.host||!ss.host.trim())return{debug:0,config:{iceServers:_buildIceServers()}};
+  return{debug:0,host:ss.host.trim(),port:ss.port||9000,path:"/peerjs",secure:!!ss.secure,config:{iceServers:_buildIceServers()}};
 }
 // Global toggle handlers for comms panel
 window.toggleCustomServer=function(cb){
