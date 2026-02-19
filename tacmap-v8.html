@@ -1104,6 +1104,18 @@ function renderFloatingPanel(){
   switch(S._activePanel){
     case"settings":title.textContent="Settings";body.innerHTML=renderSettings();break;
     case"comms":title.textContent="Comms";body.innerHTML=renderComms();
+      (function(){
+        var _e=function(id){return document.getElementById(id)};
+        var _cs=_e("net-custom-sig");if(_cs)_cs.onclick=function(){if(this.checked){S._signalServer={host:"",port:9000,secure:false}}else{S._signalServer=null}localStorage.setItem("sm_signalServer",JSON.stringify(S._signalServer));renderFloatingPanel()};
+        var _ssl=_e("net-sig-secure");if(_ssl)_ssl.onclick=function(){if(!S._signalServer)S._signalServer={};S._signalServer.secure=this.checked;localStorage.setItem("sm_signalServer",JSON.stringify(S._signalServer))};
+        if(_e("net-sig-host"))_e("net-sig-host").onchange=function(){if(!S._signalServer)S._signalServer={};S._signalServer.host=this.value;localStorage.setItem("sm_signalServer",JSON.stringify(S._signalServer))};
+        if(_e("net-sig-port"))_e("net-sig-port").onchange=function(){if(!S._signalServer)S._signalServer={};S._signalServer.port=parseInt(this.value)||9000;localStorage.setItem("sm_signalServer",JSON.stringify(S._signalServer))};
+        if(_e("net-turn-host"))_e("net-turn-host").onchange=function(){if(!S._turnServer)S._turnServer={};S._turnServer.host=this.value;localStorage.setItem("sm_turnServer",JSON.stringify(S._turnServer))};
+        if(_e("net-turn-port"))_e("net-turn-port").onchange=function(){if(!S._turnServer)S._turnServer={};S._turnServer.port=parseInt(this.value)||3478;localStorage.setItem("sm_turnServer",JSON.stringify(S._turnServer))};
+        if(_e("net-turn-user"))_e("net-turn-user").onchange=function(){if(!S._turnServer)S._turnServer={};S._turnServer.user=this.value;localStorage.setItem("sm_turnServer",JSON.stringify(S._turnServer))};
+        if(_e("net-turn-pass"))_e("net-turn-pass").onchange=function(){if(!S._turnServer)S._turnServer={};S._turnServer.pass=this.value;localStorage.setItem("sm_turnServer",JSON.stringify(S._turnServer))};
+        var _pr=_e("net-persist-room");if(_pr)_pr.onclick=function(){if(this.checked){S._net.persistentRoom=S._net.roomCode;IO.autosave();IO.notify("Room "+S._net.roomCode+" will auto-host on next load","success")}else{S._net.persistentRoom=null;IO.autosave();IO.notify("Persistent room cleared")}renderFloatingPanel()};
+      })();
       break;
     case"chat":title.textContent="Chat";body.innerHTML=renderChat();break;
     case"layers":title.textContent="Layers";body.innerHTML=renderLayers();break;
@@ -1158,28 +1170,82 @@ function renderSettings(){
 function renderComms(){
   const n=S._net;let h='<div class="section"><div class="section-title">Connection</div>';
   h+='<label>Callsign</label><input type="text" id="net-name" value="'+escAttr(n.peerName||"")+'" placeholder="Your callsign" maxlength="20" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">';
-  var _ss=S._signalServer||{};var _ssOn=!!S._signalServer;
-  h+='<div class="ed-section-title" style="margin-top:10px">SIGNAL SERVER</div>';
-  h+='<div class="toggle-row"><label class="switch"><input type="checkbox" id="net-custom-sig"'+(_ssOn?' checked':'')+'><span class="slider"></span></label><span>Use custom server</span></div>';
-  if(_ssOn){
-    h+='<label>Host</label><input type="text" id="net-sig-host" value="'+escAttr(_ss.host||'')+'" placeholder="e.g. 192.168.1.100">';
-    h+='<label>Port</label><input type="number" id="net-sig-port" value="'+(_ss.port||9000)+'" placeholder="9000">';
-    h+='<div class="toggle-row"><label class="switch"><input type="checkbox" id="net-sig-secure"'+(_ss.secure?' checked':'')+'><span class="slider"></span></label><span>SSL</span></div>';
-    h+='<div class="ed-section-title" style="margin-top:8px">TURN RELAY</div>';
+  if(n.mode==="offline"){
+    var _step=S._commsStep||"role";
+    var _ss=S._signalServer||{};var _ssOn=!!S._signalServer;
     var _ts=S._turnServer||{};
-    h+='<label>Host</label><input type="text" id="net-turn-host" value="'+escAttr(_ts.host||'')+'" placeholder="Same as signal host">';
-    h+='<label>Port</label><input type="number" id="net-turn-port" value="'+(_ts.port||3478)+'" placeholder="3478">';
-    h+='<label>Username</label><input type="text" id="net-turn-user" value="'+escAttr(_ts.user||'')+'" placeholder="staffmaps">';
-    h+='<label>Password</label><input type="password" id="net-turn-pass" value="'+escAttr(_ts.pass||'')+'" placeholder="staffmaps">';
-    h+='<div style="font-size:10px;opacity:.5;margin-bottom:6px">Using custom: '+escHtml(_ss.host)+':'+(_ss.port||9000)+'</div>';
-  } else {
-    h+='<div style="font-size:10px;opacity:.5;margin-bottom:6px">Using default PeerJS cloud</div>';
+    var _bk='<div style="margin-top:8px"><button class="btn" onclick="S._commsStep=null;renderFloatingPanel()" style="font-size:10px;padding:3px 8px">\u2190 Back</button></div>';
+
+    if(_step==="role"){
+      /* Choose role */
+      h+='<div style="margin-top:16px;display:flex;flex-direction:column;gap:8px">';
+      h+='<button class="btn primary" style="padding:14px;font-size:13px;font-weight:600" onclick="S._commsStep=\'server\';S._commsRole=\'host\';renderFloatingPanel()">\u25B6 Host a Room</button>';
+      h+='<button class="btn" style="padding:14px;font-size:13px;font-weight:600" onclick="S._commsStep=\'server\';S._commsRole=\'join\';renderFloatingPanel()">\u2192 Join a Room</button>';
+      h+='</div>';
+
+    } else if(_step==="server"){
+      h+=_bk;
+      h+='<div class="ed-section-title" style="margin-top:8px">SERVER TYPE</div>';
+      h+='<div style="font-size:11px;opacity:.7;margin-bottom:10px">How should devices find each other?</div>';
+      h+='<div style="display:flex;flex-direction:column;gap:8px">';
+      h+='<button class="btn'+(! _ssOn?' primary':'')+'" style="padding:12px;text-align:left" onclick="S._signalServer=null;localStorage.setItem(\'sm_signalServer\',null);S._commsStep=\'go\';renderFloatingPanel()"><strong>Default Cloud</strong><br><span style=\"font-size:10px;opacity:.7\">Works anywhere with internet. No setup needed.</span></button>';
+      h+='<button class="btn'+(_ssOn?' primary':'')+'" style="padding:12px;text-align:left" onclick="if(!S._signalServer)S._signalServer={host:\'\',port:9000,secure:false};localStorage.setItem(\'sm_signalServer\',JSON.stringify(S._signalServer));S._commsStep=\'host\';renderFloatingPanel()"><strong>Custom Server</strong><br><span style=\"font-size:10px;opacity:.7\">Use your own signal server on a local network.</span></button>';
+      h+='</div>';
+
+    } else if(_step==="host"){
+      h+=_bk;
+      h+='<div class="ed-section-title" style="margin-top:8px">SERVER ADDRESS</div>';
+      h+='<div style="font-size:11px;opacity:.7;margin-bottom:6px">Enter the IP address or hostname of your signal server. Get this from whoever set up the server.</div>';
+      h+='<label>Host</label><input type="text" id="net-sig-host" value="'+escAttr(_ss.host||'')+'" placeholder="e.g. 192.168.1.100">';
+      h+='<div style="display:flex;justify-content:flex-end;margin-top:4px"><button class="btn primary" onclick="S._commsStep=\'port\';renderFloatingPanel()">Next \u2192</button></div>';
+
+    } else if(_step==="port"){
+      h+=_bk;
+      h+='<div class="ed-section-title" style="margin-top:8px">SERVER PORT</div>';
+      h+='<div style="font-size:11px;opacity:.7;margin-bottom:6px">Default is 9000. If you don\'t know, leave it as-is.</div>';
+      h+='<label>Port</label><input type="number" id="net-sig-port" value="'+(_ss.port||9000)+'" placeholder="9000">';
+      h+='<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">';
+      h+='<button class="btn" onclick="S._commsStep=\'turn\';renderFloatingPanel()">Next \u2192</button>';
+      h+='</div>';
+
+    } else if(_step==="turn"){
+      h+=_bk;
+      h+='<div class="ed-section-title" style="margin-top:8px">TURN RELAY</div>';
+      h+='<div style="font-size:11px;opacity:.7;margin-bottom:10px">A TURN relay helps connections work across firewalls. Most local networks don\'t need one. If unsure, skip this.</div>';
+      h+='<div style="display:flex;flex-direction:column;gap:8px">';
+      h+='<button class="btn primary" style="padding:10px" onclick="S._commsStep=\'go\';renderFloatingPanel()">Skip — I don\'t need TURN</button>';
+      h+='<button class="btn" style="padding:10px" onclick="S._commsStep=\'turnconfig\';renderFloatingPanel()">Configure TURN relay</button>';
+      h+='</div>';
+
+    } else if(_step==="turnconfig"){
+      h+=_bk;
+      h+='<div class="ed-section-title" style="margin-top:8px">TURN RELAY SETTINGS</div>';
+      h+='<div style="font-size:11px;opacity:.7;margin-bottom:6px">Get these from your server admin. If your TURN server runs on the same machine as your signal server, use the same host.</div>';
+      h+='<label>Host</label><input type="text" id="net-turn-host" value="'+escAttr(_ts.host||'')+'" placeholder="Same as signal server">';
+      h+='<label>Port</label><input type="number" id="net-turn-port" value="'+(_ts.port||3478)+'" placeholder="3478">';
+      h+='<label>Username</label><input type="text" id="net-turn-user" value="'+escAttr(_ts.user||'')+'" placeholder="staffmaps">';
+      h+='<label>Password</label><input type="password" id="net-turn-pass" value="'+escAttr(_ts.pass||'')+'" placeholder="staffmaps">';
+      h+='<div style="display:flex;justify-content:flex-end;margin-top:4px"><button class="btn primary" onclick="S._commsStep=\'go\';renderFloatingPanel()">Next \u2192</button></div>';
+
+    } else if(_step==="go"){
+      h+=_bk;
+      if(_ssOn){
+        h+='<div style="font-size:10px;opacity:.5;margin-bottom:8px">Server: '+escHtml(_ss.host||"cloud")+':'+(_ss.port||9000)+'</div>';
+      } else {
+        h+='<div style="font-size:10px;opacity:.5;margin-bottom:8px">Using default PeerJS cloud</div>';
+      }
+      if(S._commsRole==="host"){
+        h+='<div class="ed-section-title">CREATE ROOM</div>';
+        h+='<button class="btn primary" style="width:100%;padding:14px;font-size:13px;font-weight:600" onclick="netCreateRoom()">Create Room</button>';
+      } else {
+        h+='<div class="ed-section-title">JOIN ROOM</div>';
+        h+='<div style="font-size:11px;opacity:.7;margin-bottom:6px">Enter the 6-character room code from the host.</div>';
+        h+='<div class="row" style="align-items:stretch"><input type="text" id="net-code" placeholder="Room code" maxlength="6" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="flex:2;margin-bottom:0"><button class="btn primary" onclick="netJoinRoom()" style="min-height:0;align-self:stretch">Join</button></div>';
+      }
+    }
   }
 
-  if(n.mode==="offline"){
-    h+='<div class="row"><button class="btn primary" onclick="netCreateRoom()">Create Room</button></div>';
-    h+='<label>Join Room</label><div class="row" style="align-items:stretch"><input type="text" id="net-code" placeholder="Room code" maxlength="6" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="flex:2;margin-bottom:0"><button class="btn" onclick="netJoinRoom()" style="min-height:0;align-self:stretch">Join</button></div>';
-  }else{
+else{
     h+='<div style="font-size:11px;margin-bottom:6px">Room: <strong>'+(n.roomCode||"---")+'</strong> <button class="btn" onclick="navigator.clipboard.writeText(\''+(n.roomCode||"")+'\')" style="padding:1px 4px;font-size:9px">Copy</button></div>';
     if(n.isHost){var _isPersist=!!n.persistentRoom;h+='<div class="toggle-row" style="margin-bottom:6px"><label class="switch"><input type="checkbox" id="net-persist-room"'+(_isPersist?' checked':'')+'><span class="slider"></span></label><span style="font-size:11px">Persistent room</span></div>';}
 
@@ -2087,15 +2153,6 @@ function bindPanelEvents(){
 
   if(el("net-djm"))el("net-djm").onchange=e=>{S._net.defaultJoinMode=e.target.checked?"view":"edit";renderFloatingPanel()};
   if(el("net-enc"))el("net-enc").onchange=e=>{S._net.encEnabled=e.target.checked;const ef=document.getElementById("enc-fields");if(ef)ef.style.display=e.target.checked?"":"none"};
-  if(el("net-custom-sig"))el("net-custom-sig").onclick=function(){if(this.checked){S._signalServer={host:"",port:9000,secure:false}}else{S._signalServer=null}localStorage.setItem("sm_signalServer",JSON.stringify(S._signalServer));renderFloatingPanel()};
-  if(el("net-sig-secure"))el("net-sig-secure").onclick=function(){if(!S._signalServer)S._signalServer={};S._signalServer.secure=this.checked;localStorage.setItem("sm_signalServer",JSON.stringify(S._signalServer))};
-  if(el("net-sig-host"))el("net-sig-host").onchange=function(e){if(!S._signalServer)S._signalServer={};S._signalServer.host=e.target.value;localStorage.setItem("sm_signalServer",JSON.stringify(S._signalServer))};
-  if(el("net-sig-port"))el("net-sig-port").onchange=function(e){if(!S._signalServer)S._signalServer={};S._signalServer.port=parseInt(e.target.value)||9000;localStorage.setItem("sm_signalServer",JSON.stringify(S._signalServer))};
-  if(el("net-persist-room"))el("net-persist-room").onclick=function(){if(this.checked){S._net.persistentRoom=S._net.roomCode;IO.autosave();IO.notify("Room "+S._net.roomCode+" will auto-host on next load","success")}else{S._net.persistentRoom=null;IO.autosave();IO.notify("Persistent room cleared")}renderFloatingPanel()};
-  if(el("net-turn-host"))el("net-turn-host").onchange=function(e){if(!S._turnServer)S._turnServer={};S._turnServer.host=e.target.value;localStorage.setItem("sm_turnServer",JSON.stringify(S._turnServer))};
-  if(el("net-turn-port"))el("net-turn-port").onchange=function(e){if(!S._turnServer)S._turnServer={};S._turnServer.port=parseInt(e.target.value)||3478;localStorage.setItem("sm_turnServer",JSON.stringify(S._turnServer))};
-  if(el("net-turn-user"))el("net-turn-user").onchange=function(e){if(!S._turnServer)S._turnServer={};S._turnServer.user=e.target.value;localStorage.setItem("sm_turnServer",JSON.stringify(S._turnServer))};
-  if(el("net-turn-pass"))el("net-turn-pass").onchange=function(e){if(!S._turnServer)S._turnServer={};S._turnServer.pass=e.target.value;localStorage.setItem("sm_turnServer",JSON.stringify(S._turnServer))};
   if(el("chat-input")){el("chat-input").onkeydown=e=>{if(e.key==="Enter")sendChat()};el("chat-input").onfocus=function(){setTimeout(function(){window.scrollTo(0,0)},300)}}
   if(el("coord-search-input"))el("coord-search-input").onkeydown=e=>{if(e.key==="Enter")coordSearch()};
   if(el("ipb-search")){el("ipb-search").oninput=function(e){S._ipbFilter=e.target.value;renderFloatingPanel()};if(S._ipbFilter){el("ipb-search").focus();var v=el("ipb-search").value;el("ipb-search").setSelectionRange(v.length,v.length)}}
@@ -2898,7 +2955,7 @@ function attemptHostMigration(){
   }
   if(!shouldHost||!n.roomCode){
     /* Wait for another peer to become host, then reconnect */
-    n.persistentRoom=null;n.mode="offline";n.status="Reconnecting...";
+    n.persistentRoom=null;S._commsStep=null;S._commsRole=null;n.mode="offline";n.status="Reconnecting...";
     updateNetDot("connecting");notify("Host lost — waiting for new host...","warning");renderFloatingPanel();
     setTimeout(function(){
       n._migrating=false;
@@ -4247,6 +4304,17 @@ function init(){
     window.visualViewport.addEventListener("resize",updateViewport);
     window.visualViewport.addEventListener("scroll",()=>{window.scrollTo(0,0)});
   }
+
+  
+  // Scroll focused input into view when iOS keyboard opens
+  document.addEventListener("focusin",function(e){
+    var t=e.target;
+    if(!t||!t.closest||!t.closest(".float-panel,.editor-overlay"))return;
+    if(t.tagName!=="INPUT"&&t.tagName!=="TEXTAREA"&&t.tagName!=="SELECT")return;
+    setTimeout(function(){
+      t.scrollIntoView({block:"center",behavior:"smooth"});
+    },300);
+  });
 
   // Show chat button when connected
   setInterval(()=>{const chatBtn=document.getElementById("sb-chat");if(chatBtn)chatBtn.style.display=S._net.mode!=="offline"?"":"none"},1000);
